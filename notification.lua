@@ -1,3 +1,5 @@
+-- Toast-like pet tool popup: group fade and group timer reset
+
 local PET_TOOL_NAMES = {
     "dragonfly", "raccoon", "disco bee", "purple dragonfly", "butterfly", "queen bee"
 }
@@ -6,21 +8,21 @@ local MESSAGE_TEXT = "You can only place your pets in your garden!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 12
+local MESSAGE_SIZE = 5
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_BG_TRANS = 0.85
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
-local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_LIFETIME = 1.2
+local MESSAGE_FADE_TIME = 0.3
+local GROUP_LIFETIME = 0.5 -- Seconds after last tap before fading all messages
+
 local MAX_VISIBLE_STACK = 5
 local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.04
+local MESSAGE_Y_STEP = 0.035
 local MESSAGE_PADDING = 8
-local MSG_COOLDOWN = 0.13
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -31,7 +33,8 @@ msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
 local activeMessages = {}
-local lastMsgTime = 0
+local fadeThread = nil
+local lastInteractionTime = 0
 
 local function isPetTool(tool)
     if not tool or not tool.Name then return false end
@@ -50,33 +53,51 @@ local function restackMessages()
     end
 end
 
-local function fadeAndRemoveMessage(msgFrame)
-    local msg = msgFrame:FindFirstChildOfClass("TextLabel")
-    game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
-    if msg then
-        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-            TextTransparency = 1,
-            TextStrokeTransparency = 1
-        }):Play()
-    end
-    task.wait(MESSAGE_FADE_TIME + 0.01)
-    msgFrame:Destroy()
-    for i, m in ipairs(activeMessages) do
-        if m == msgFrame then
-            table.remove(activeMessages, i)
-            break
+local function clearAllMessages()
+    for _, msgFrame in ipairs(activeMessages) do
+        local msg = msgFrame:FindFirstChildOfClass("TextLabel")
+        game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
+        if msg then
+            game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
+                TextTransparency = 1,
+                TextStrokeTransparency = 1
+            }):Play()
         end
     end
-    restackMessages()
+    task.wait(MESSAGE_FADE_TIME + 0.01)
+    for _, msgFrame in ipairs(activeMessages) do
+        msgFrame:Destroy()
+    end
+    table.clear(activeMessages)
+end
+
+local function startFadeTimer()
+    if fadeThread then
+        coroutine.close(fadeThread)
+    end
+    fadeThread = coroutine.create(function()
+        while true do
+            local now = tick()
+            local timeToWait = (lastInteractionTime + GROUP_LIFETIME) - now
+            if timeToWait > 0 then
+                task.wait(timeToWait)
+            end
+            -- If no new interaction, fade all
+            if (tick() - lastInteractionTime) >= GROUP_LIFETIME then
+                clearAllMessages()
+                break
+            end
+        end
+    end)
+    coroutine.resume(fadeThread)
 end
 
 local function showMessage(text)
+    -- Prune stack if at max stack
     if #activeMessages >= SPAM_MAX then return end
-    if tick() - lastMsgTime < MSG_COOLDOWN then return end
-    lastMsgTime = tick()
 
+    -- Add message to stack (up to MAX_VISIBLE_STACK)
     restackMessages()
-
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 400, 0, 18)
     bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((#activeMessages)*MESSAGE_Y_STEP), 0)
@@ -115,20 +136,30 @@ local function showMessage(text)
 
     table.insert(activeMessages, bg)
 
-    -- If stack exceeds max visible, fade out the bottom-most (oldest) message
+    -- If stack exceeds max visible, fade out oldest immediately
     if #activeMessages > MAX_VISIBLE_STACK then
         local toFade = activeMessages[1]
+        table.remove(activeMessages, 1)
+        local msgLabel = toFade:FindFirstChildOfClass("TextLabel")
+        game.TweenService:Create(toFade, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
+        if msgLabel then
+            game.TweenService:Create(msgLabel, TweenInfo.new(MESSAGE_FADE_TIME), {
+                TextTransparency = 1,
+                TextStrokeTransparency = 1
+            }):Play()
+        end
         task.spawn(function()
-            fadeAndRemoveMessage(toFade)
+            task.wait(MESSAGE_FADE_TIME + 0.01)
+            toFade:Destroy()
+            restackMessages()
         end)
+    else
+        restackMessages()
     end
 
-    -- Auto-fade after lifetime
-    task.delay(MESSAGE_LIFETIME, function()
-        if bg.Parent then
-            fadeAndRemoveMessage(bg)
-        end
-    end)
+    -- Reset group fade timer on every interaction
+    lastInteractionTime = tick()
+    startFadeTimer()
 end
 
 -- Utility: returns true if input is on a GUI button
