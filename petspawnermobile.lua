@@ -433,30 +433,43 @@ Create("TextLabel", {
 })
 
 -- === DRAGGABLE BOTTOM BAR (Desktop & Mobile) ===
-local resizeBarHeight =  -10
-local resizeBarHoverHeight = 10
+local resizeBarHeight = 10 -- Positive value, visible like your screenshot
+local resizeBarHoverHeight = 16
 local resizeBar = Instance.new("TextButton")
 resizeBar.Name = "MoveBar"
 resizeBar.Parent = frame
 resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHeight)
 resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHeight)
-resizeBar.BackgroundColor3 = COLOR_BORDER
+resizeBar.BackgroundColor3 = COLOR_BORDER -- or use COLOR_PANEL/COLOR_BG for a subtler look
 resizeBar.Text = ""
 resizeBar.AutoButtonColor = false
-resizeBar.BackgroundTransparency = 0.15
+resizeBar.BackgroundTransparency = 0 -- Fully visible
 resizeBar.BorderSizePixel = 0
 local resizeBarCorner = Instance.new("UICorner", resizeBar)
-resizeBarCorner.CornerRadius = UDim.new(1, 3)
+resizeBarCorner.CornerRadius = UDim.new(1, 5)
+
+-- Add a "grip" visual (3 dots)
+local grip = Instance.new("TextLabel")
+grip.Parent = resizeBar
+grip.Size = UDim2.new(0,36,0,resizeBarHeight)
+grip.Position = UDim2.new(0.5,-18,0,0)
+grip.BackgroundTransparency = 1
+grip.Text = "⋯"
+grip.TextColor3 = COLOR_TEXT
+grip.Font = FONT_BOLD
+grip.TextSize = 22
 
 resizeBar.MouseEnter:Connect(function()
     resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHoverHeight)
     resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHoverHeight)
     resizeBar.BackgroundColor3 = COLOR_ACCENT
+    grip.TextColor3 = Color3.fromRGB(255,255,255)
 end)
 resizeBar.MouseLeave:Connect(function()
     resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHeight)
     resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHeight)
     resizeBar.BackgroundColor3 = COLOR_BORDER
+    grip.TextColor3 = COLOR_TEXT
 end)
 
 -- Universal dragging (desktop & mobile)
