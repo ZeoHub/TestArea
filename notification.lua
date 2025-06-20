@@ -4,14 +4,14 @@ local PET_TOOL_NAMES = {
 
 local MESSAGE_TEXT = "You are not holding an item!"
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 12
+local MESSAGE_SIZE = 14
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_BG_TRANS = 0.85
+local MESSAGE_BG_TRANS = 0.9
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_LIFETIME = 1.2
+local MESSAGE_LIFETIME = 3.5
 local BATCH_FADE_DELAY = 0.5
 local SPAM_MAX = 20
 
