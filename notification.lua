@@ -1,5 +1,5 @@
 local MESSAGE_TEXT = "You are not holding an item!"
-local MESSAGE_FONT = Enum.Font.GothamBold
+local MESSAGE_FONT = Enum.Font.ComicSans -- Playful, rounded font
 local MESSAGE_SIZE = 14
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark background
@@ -174,7 +174,7 @@ do
     testBtn.Text = "Test Popup Message"
     testBtn.TextColor3 = Color3.fromRGB(255,255,255)
     testBtn.TextSize = 18
-    testBtn.Font = Enum.Font.GothamBold
+    testBtn.Font = Enum.Font.ComicSans -- Playful, rounded font for test button too!
     testBtn.AutoButtonColor = true
     local uic = Instance.new("UICorner", testBtn)
     uic.CornerRadius = UDim.new(0,12)
