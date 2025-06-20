@@ -1,12 +1,12 @@
 local MESSAGE_TEXT = "You are not holding an item!"
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 15
+local MESSAGE_SIZE = 14
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_BG_TRANS = 0.85
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
-local MESSAGE_FADE_TIME = 0.5
+local MESSAGE_FADE_TIME = 0.25
 local MESSAGE_LIFETIME = 3.5
 local BATCH_FADE_DELAY = 0.5
 local MSG_COOLDOWN = 0.13
@@ -16,6 +16,11 @@ local BATCH_SIZE = 5
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
 local MESSAGE_PADDING = 8
+local FEATHER_WIDTH = 24 -- width of the fading edge
+
+-- Replace these with your own uploaded asset IDs!
+local LEFT_FADE_ID = "rbxassetid://18222706821"  -- Example placeholder, use your own!
+local RIGHT_FADE_ID = "rbxassetid://18222707237" -- Example placeholder, use your own!
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -106,6 +111,23 @@ local function showMessage(text)
     bg.BorderSizePixel = 0
     bg.ZIndex = 100
     bg.Parent = msgGui
+
+    -- Feathered Edges
+    local leftFade = Instance.new("ImageLabel")
+    leftFade.Size = UDim2.new(0, FEATHER_WIDTH, 1, 0)
+    leftFade.Position = UDim2.new(0, 0, 0, 0)
+    leftFade.BackgroundTransparency = 1
+    leftFade.Image = LEFT_FADE_ID
+    leftFade.ZIndex = bg.ZIndex + 1
+    leftFade.Parent = bg
+
+    local rightFade = Instance.new("ImageLabel")
+    rightFade.Size = UDim2.new(0, FEATHER_WIDTH, 1, 0)
+    rightFade.Position = UDim2.new(1, -FEATHER_WIDTH, 0, 0)
+    rightFade.BackgroundTransparency = 1
+    rightFade.Image = RIGHT_FADE_ID
+    rightFade.ZIndex = bg.ZIndex + 1
+    rightFade.Parent = bg
 
     local pad = Instance.new("UIPadding")
     pad.PaddingLeft = UDim.new(0, MESSAGE_PADDING)
