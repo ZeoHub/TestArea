@@ -5,10 +5,10 @@ local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark background
 local MESSAGE_BG_TRANS = 0.92 -- High transparency for a subtle look
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_STROKE_TRANS = 0.22 -- Less transparent = more visible stroke
+local MESSAGE_STROKE_TRANS = 0.5 -- Less transparent = more visible stroke
 local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_LIFETIME = 3.5
-local BATCH_FADE_DELAY = 0.5
+local MESSAGE_LIFETIME = 3
+local BATCH_FADE_DELAY = 0.35
 local MSG_COOLDOWN = 0.13
 local STACK_MAX = 20
 local BATCH_SIZE = 5
