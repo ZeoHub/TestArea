@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels)
+-- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels and minimal drag handle footer)
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -28,7 +28,6 @@ local COLOR_ALERT    = Color3.fromRGB(231, 76, 60)
 local COLOR_TEXT     = Color3.fromRGB(230,230,230)
 local COLOR_PLACEH   = Color3.fromRGB(160,160,160)
 local COLOR_INPUT    = Color3.fromRGB(50,50,50)
-local COLOR_FOOTER   = Color3.fromRGB(30, 30, 30)
 local FONT_MAIN      = Enum.Font.Gotham
 local FONT_BOLD      = Enum.Font.GothamBold
 
@@ -121,7 +120,7 @@ Create("TextLabel", {
     Size = UDim2.new(1,0,0,18),
     Position = UDim2.new(0,0,0,6),
     BackgroundTransparency = 1,
-    Text = "Settings",
+    Text = "Settings (Minimal Demo)",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -140,7 +139,6 @@ Create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
     ZIndex = 21
 })
-
 settingsBtn.MouseButton1Click:Connect(function()
     settingsPopup.Visible = not settingsPopup.Visible
 end)
@@ -196,7 +194,7 @@ Create("TextLabel", {
     Size = UDim2.new(0, 36, 0, 12),
     Position = UDim2.new(0, 18, 0, 2),
     BackgroundTransparency = 1,
-    Text = "🦝 Pets",    -- emoji added!
+    Text = "🐾 Pets",    -- emoji added!
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -411,103 +409,44 @@ end)
 petBtn.MouseEnter:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 
--- Centered footer (with rounded corners)
-local footerFrame = Create("Frame", {
-    Parent = frame,
-    Size = UDim2.new(1, 0, 0, 18),
-    Position = UDim2.new(0,0,1,-18),
-    BackgroundColor3 = COLOR_PANEL,
-    BorderSizePixel = 0
-})
-Create("UICorner", {Parent=footerFrame, CornerRadius=UDim.new(0, 8)})
-Create("TextLabel", {
-    Parent = footerFrame,
-    Size = UDim2.new(1, 0, 0, 18),
-    Position = UDim2.new(0, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "Grow A Garden • 1.25.10.8 • @deeznuts",
-    TextColor3 = COLOR_TEXT,
-    Font = FONT_MAIN,
-    TextSize = 9,
-    TextXAlignment = Enum.TextXAlignment.Center,
-})
+-- === BOTTOM FOOTER + DRAG HANDLE (like reference image) ===
+local footerHeight = 28
 
--- === DRAGGABLE BOTTOM BAR (Desktop & Mobile) ===
-local resizeBarHeight = 10 -- Positive value, visible like your screenshot
-local resizeBarHoverHeight = 16
-local resizeBar = Instance.new("TextButton")
-resizeBar.Name = "MoveBar"
-resizeBar.Parent = frame
-resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHeight)
-resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHeight)
-resizeBar.BackgroundColor3 = COLOR_BORDER -- or use COLOR_PANEL/COLOR_BG for a subtler look
-resizeBar.Text = ""
-resizeBar.AutoButtonColor = false
-resizeBar.BackgroundTransparency = 0 -- Fully visible
-resizeBar.BorderSizePixel = 0
-local resizeBarCorner = Instance.new("UICorner", resizeBar)
-resizeBarCorner.CornerRadius = UDim.new(1, 5)
+-- Footer background
+local footer = Instance.new("Frame")
+footer.Name = "Footer"
+footer.Parent = frame
+footer.Size = UDim2.new(1, 0, 0, footerHeight)
+footer.Position = UDim2.new(0, 0, 1, -footerHeight)
+footer.BackgroundColor3 = COLOR_BG
+footer.BorderSizePixel = 0
+local footerCorner = Instance.new("UICorner", footer)
+footerCorner.CornerRadius = UDim.new(0, 14)
 
--- Add a "grip" visual (3 dots)
-local grip = Instance.new("TextLabel")
-grip.Parent = resizeBar
-grip.Size = UDim2.new(0,36,0,resizeBarHeight)
-grip.Position = UDim2.new(0.5,-18,0,0)
-grip.BackgroundTransparency = 1
-grip.Text = "⋯"
-grip.TextColor3 = COLOR_TEXT
-grip.Font = FONT_BOLD
-grip.TextSize = 22
+-- Drag handle (the white line)
+local dragHandle = Instance.new("Frame")
+dragHandle.Name = "DragHandle"
+dragHandle.Parent = footer
+dragHandle.Size = UDim2.new(0, 64, 0, 6) -- width/height for the white line
+dragHandle.Position = UDim2.new(0.5, -32, 0, 8)
+dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
+dragHandle.BackgroundTransparency = 0
+dragHandle.BorderSizePixel = 0
+local handleCorner = Instance.new("UICorner", dragHandle)
+handleCorner.CornerRadius = UDim.new(1, 3)
 
-resizeBar.MouseEnter:Connect(function()
-    resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHoverHeight)
-    resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHoverHeight)
-    resizeBar.BackgroundColor3 = COLOR_ACCENT
-    grip.TextColor3 = Color3.fromRGB(255,255,255)
-end)
-resizeBar.MouseLeave:Connect(function()
-    resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHeight)
-    resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHeight)
-    resizeBar.BackgroundColor3 = COLOR_BORDER
-    grip.TextColor3 = COLOR_TEXT
-end)
+-- Make the handle draggable (mobile & desktop)
+local dragging = false
+local dragStart, startPos
 
--- Universal dragging (desktop & mobile)
-local draggingBar = false
-local dragBarStart, startBarPos
-
-local function beginDrag(input)
-    draggingBar = true
-    dragBarStart = input.Position
-    startBarPos = frame.Position
-
-    local connMove, connEnd
-    connMove = game:GetService("UserInputService").InputChanged:Connect(function(moveInput)
-        if draggingBar and (moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch) then
-            local delta = moveInput.Position - dragBarStart
-            frame.Position = UDim2.new(startBarPos.X.Scale, startBarPos.X.Offset + delta.X, startBarPos.Y.Scale, startBarPos.Y.Offset + delta.Y)
-        end
-    end)
-    connEnd = game:GetService("UserInputService").InputEnded:Connect(function(upInput)
-        if upInput.UserInputType == Enum.UserInputType.MouseButton1 or upInput.UserInputType == Enum.UserInputType.Touch then
-            draggingBar = false
-            if connMove then connMove:Disconnect() end
-            if connEnd then connEnd:Disconnect() end
-        end
-    end)
+local function onDragInput(input)
+    if not dragging then return end
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
-resizeBar.InputBegan:Connect(function(input)
+dragHandle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        beginDrag(input)
-    end
-end)
-
--- Drag to move (top bar, both desktop & mobile)
-local dragging, dragStart, startPos
-frame.InputBegan:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
-      and input.Position.Y-frame.AbsolutePosition.Y < 32 then -- top bar is 32 tall
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
@@ -518,9 +457,8 @@ frame.InputBegan:Connect(function(input)
         end)
     end
 end)
-frame.InputChanged:Connect(function(input)
+dragHandle.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        onDragInput(input)
     end
 end)
