@@ -1,3 +1,4 @@
+```lua name=PetToolPopup.lua
 local PET_TOOL_NAMES = {
     "dragonfly", "raccoon", "disco bee", "purple dragonfly", "butterfly", "queen bee"
 }
@@ -28,6 +29,12 @@ msgGui.Name = "PetToolMsgGui"
 msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
+
+local popupSound = msgGui:FindFirstChild("PopupSound") or Instance.new("Sound")
+popupSound.Name = "PopupSound"
+popupSound.SoundId = "rbxassetid://12222005"
+popupSound.Volume = 0.45
+popupSound.Parent = msgGui
 
 local activeMessages = {}
 local lastMsgTime = 0
@@ -106,7 +113,12 @@ local function showMessage(text)
     if #activeMessages >= STACK_MAX then return end
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
-
+    if popupSound.IsLoaded then
+        popupSound:Play()
+    else
+        popupSound.Loaded:Wait()
+        popupSound:Play()
+    end
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 250, 0, 17)
     bg.Position = UDim2.new(0.5, -125, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
@@ -115,16 +127,13 @@ local function showMessage(text)
     bg.BorderSizePixel = 0
     bg.ZIndex = 100
     bg.Parent = msgGui
-
     local uic = Instance.new("UICorner")
     uic.CornerRadius = UDim.new(0, 22)
     uic.Parent = bg
-
     local pad = Instance.new("UIPadding")
     pad.PaddingLeft = UDim.new(0, MESSAGE_PADDING)
     pad.PaddingRight = UDim.new(0, MESSAGE_PADDING)
     pad.Parent = bg
-
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(1, 0, 1, 0)
     msg.BackgroundTransparency = 1
@@ -137,7 +146,6 @@ local function showMessage(text)
     msg.TextWrapped = true
     msg.ZIndex = 101
     msg.Parent = bg
-
     game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = MESSAGE_BG_TRANS}):Play()
     msg.TextTransparency = 1
     msg.TextStrokeTransparency = 1
@@ -145,7 +153,6 @@ local function showMessage(text)
         TextTransparency = 0,
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
-
     local msgTbl = {frame = bg, created = tick(), faded = false, claimed = false}
     table.insert(activeMessages, msgTbl)
     restackMessages()
@@ -158,7 +165,6 @@ local function showMessage(text)
     end)
 end
 
--- Tool check input hook (like version 1)
 local UserInputService = game:GetService("UserInputService")
 local mouse = player:GetMouse()
 mouse.Button1Down:Connect(function()
@@ -171,7 +177,6 @@ mouse.Button1Down:Connect(function()
     end
 end)
 
--- TEST BUTTON (for easy testing)
 do
     local testBtn = Instance.new("TextButton")
     testBtn.Name = "TestPetMsgBtn"
@@ -197,3 +202,4 @@ do
         end
     end)
 end
+```
