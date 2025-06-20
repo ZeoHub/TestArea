@@ -1,20 +1,20 @@
 local MESSAGE_TEXT = "You are not holding an item!"
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 14
+local MESSAGE_SIZE = 12
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_BG_TRANS = 0.85
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_LIFETIME = 3.5
+local MESSAGE_LIFETIME = 1.2
 local BATCH_FADE_DELAY = 0.5
 local MSG_COOLDOWN = 0.13
 local STACK_MAX = 20
 local BATCH_SIZE = 5
 
-local MESSAGE_Y_START = 0.29
-local MESSAGE_Y_STEP = 0.032
+local MESSAGE_Y_START = 0.33
+local MESSAGE_Y_STEP = 0.035
 local MESSAGE_PADDING = 8
 
 local player = game.Players.LocalPlayer
@@ -27,6 +27,8 @@ msgGui.Parent = gui
 
 local activeMessages = {} -- {frame, created, faded, batchId}
 local lastMsgTime = 0
+local batchCounter = 0
+local batchFaderRunning = false
 
 local function restackMessages()
     for i, msgTbl in ipairs(activeMessages) do
@@ -65,26 +67,28 @@ local function fadeBatch(batch)
     end
 end
 
--- Ensures no overlapping batch runners, and always handles all batches in order.
-local batchFaderRunning = false
-local function runBatchFader()
+local function startBatchFader()
     if batchFaderRunning then return end
     batchFaderRunning = true
     task.spawn(function()
         while true do
+            -- Only work while there are enough for a batch
             if #activeMessages < BATCH_SIZE then break end
-            -- Get the next batch (must always be the first 5)
-            local batch = {}
+            -- Get the next batch of 5 (must all have a batchId == current batch)
+            batchCounter += 1
+            local batchId = batchCounter
             for i = 1, math.min(BATCH_SIZE, #activeMessages) do
-                table.insert(batch, activeMessages[i])
+                activeMessages[i].batchId = batchId
             end
-            -- Wait for the oldest message of this batch to reach its lifetime
-            local now = tick()
-            local oldestCreated = batch[1].created
-            local timeToWait = MESSAGE_LIFETIME - (now - oldestCreated)
-            if timeToWait > 0 then
-                task.wait(timeToWait)
+            -- Snap the batch
+            local batch = {}
+            for i = 1, BATCH_SIZE do
+                batch[i] = activeMessages[i]
             end
+            -- Wait for the lifetime of the oldest in this batch
+            local firstCreated = batch[1].created
+            local toWait = MESSAGE_LIFETIME - (tick() - firstCreated)
+            if toWait > 0 then task.wait(toWait) end
             fadeBatch(batch)
             if #activeMessages >= BATCH_SIZE then
                 task.wait(BATCH_FADE_DELAY)
@@ -135,31 +139,24 @@ local function showMessage(text)
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
 
-    local msgTbl = {frame = bg, created = tick(), faded = false}
+    local msgTbl = {frame = bg, created = tick(), faded = false, batchId = nil}
     table.insert(activeMessages, msgTbl)
     restackMessages()
 
     if #activeMessages < BATCH_SIZE then
-        -- Less than 5: fade individually, but only if we stay < BATCH_SIZE
+        -- Fade individually
         task.spawn(function()
             local myRef = msgTbl
-            local myIndex
             task.wait(MESSAGE_LIFETIME)
-            -- Only fade if still in stack and stack is still less than batch size
-            for i, m in ipairs(activeMessages) do
-                if m == myRef then
-                    myIndex = i
-                    break
-                end
-            end
-            if myIndex and #activeMessages < BATCH_SIZE and not myRef.faded then
+            if not myRef.faded and (myRef.batchId == nil) then
                 fadeMessage(myRef)
             end
         end)
     elseif #activeMessages == BATCH_SIZE then
-        -- We just reached a batch, start batch fader
-        runBatchFader()
+        -- Exactly reached a batch, start batch fader
+        startBatchFader()
     end
+    -- If we are above BATCH_SIZE, batch fader will claim all new popups into the next batch
 end
 
 -- Example input hook for testing:
