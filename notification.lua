@@ -25,11 +25,10 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
-local activeMessages = {} -- {frame, created, faded, batchKey}
+local activeMessages = {} -- {frame, created, faded, batchNo}
 local lastMsgTime = 0
-local batchFaderRunning = false
-local nextBatchKey = 1
 
+-- Utility: restack
 local function restackMessages()
     for i, msgTbl in ipairs(activeMessages) do
         local msgFrame = msgTbl.frame
@@ -38,6 +37,7 @@ local function restackMessages()
     end
 end
 
+-- Utility: fade
 local function fadeMessage(msgTbl)
     if msgTbl.faded then return end
     local msgFrame = msgTbl.frame
@@ -61,38 +61,27 @@ local function fadeMessage(msgTbl)
     restackMessages()
 end
 
-local function fadeBatch(batch)
-    for _,msgTbl in ipairs(batch) do
-        fadeMessage(msgTbl)
-    end
-end
-
+-- Core batch fader: always works through the activeMessages in correct batches, never skipping any
+local batchFaderRunning = false
 local function batchFader()
     if batchFaderRunning then return end
     batchFaderRunning = true
     task.spawn(function()
-        while #activeMessages >= BATCH_SIZE do
-            -- Assign batchKey to the oldest batch
-            local batchKey = nextBatchKey
-            nextBatchKey = nextBatchKey + 1
+        while true do
+            if #activeMessages < BATCH_SIZE then break end
+            -- Pick the oldest full batch
             local batch = {}
-            for i = 1, math.min(BATCH_SIZE, #activeMessages) do
-                local msg = activeMessages[i]
-                msg.batchKey = batchKey
-                batch[i] = msg
+            for i = 1, BATCH_SIZE do
+                batch[i] = activeMessages[i]
             end
             -- Wait for the lifetime of the oldest in this batch
             local oldest = batch[1]
             local toWait = MESSAGE_LIFETIME - (tick() - oldest.created)
             if toWait > 0 then task.wait(toWait) end
-            -- Fade all with this batchKey (protects against popping/stack changes)
-            local toFade = {}
-            for i = #activeMessages, 1, -1 do
-                if activeMessages[i].batchKey == batchKey and not activeMessages[i].faded then
-                    table.insert(toFade, 1, activeMessages[i])
-                end
+            -- Fade this batch together
+            for _, msg in ipairs(batch) do
+                fadeMessage(msg)
             end
-            fadeBatch(toFade)
             if #activeMessages >= BATCH_SIZE then
                 task.wait(BATCH_FADE_DELAY)
             end
@@ -142,20 +131,21 @@ local function showMessage(text)
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
 
-    local msgTbl = {frame = bg, created = tick(), faded = false, batchKey = nil}
+    local msgTbl = {frame = bg, created = tick(), faded = false, batchNo = nil}
     table.insert(activeMessages, msgTbl)
     restackMessages()
 
     if #activeMessages < BATCH_SIZE then
-        -- Fade individually (if not claimed by a batch when its time is up)
+        -- Fade individually
         task.spawn(function()
             task.wait(MESSAGE_LIFETIME)
-            if not msgTbl.faded and msgTbl.batchKey == nil then
+            -- Only fade if it's still not part of a batch and not already faded
+            if not msgTbl.faded and (table.find(activeMessages, msgTbl) and #activeMessages < BATCH_SIZE) then
                 fadeMessage(msgTbl)
             end
         end)
     elseif #activeMessages == BATCH_SIZE then
-        -- Start batch fader when we hit a batch
+        -- Start batch fader when first batch is formed
         batchFader()
     end
 end
