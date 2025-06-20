@@ -1,11 +1,11 @@
 local MESSAGE_TEXT = "You are not holding an item!"
 local MESSAGE_FONT = Enum.Font.ComicSans -- Playful, rounded font
-local MESSAGE_SIZE = 14
+local MESSAGE_SIZE = 15
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark background
 local MESSAGE_BG_TRANS = 0.92 -- High transparency for a subtle look
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_STROKE_TRANS = 0.5
+local MESSAGE_STROKE_TRANS = 0.22 -- Less transparent = more visible stroke
 local MESSAGE_FADE_TIME = 0.25
 local MESSAGE_LIFETIME = 3.5
 local BATCH_FADE_DELAY = 0.5
@@ -129,6 +129,14 @@ local function showMessage(text)
     msg.TextWrapped = true
     msg.ZIndex = 101
     msg.Parent = bg
+
+    -- Add a little bit of stroke (border) to the background
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(40,40,40)
+    stroke.Thickness = 1.5
+    stroke.Transparency = 0.2 -- 0 = solid, 1 = invisible (so 0.2 is a little bit visible)
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = bg
 
     -- Fade in
     game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = MESSAGE_BG_TRANS}):Play()
