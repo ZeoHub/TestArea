@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels and a floating visual-only drag handle)
+-- Pet Spawner Premium — Mobile-Friendly Version (emoji labels, visible footer, floating visual handle, top-bar drag)
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -28,6 +28,7 @@ local COLOR_ALERT    = Color3.fromRGB(231, 76, 60)
 local COLOR_TEXT     = Color3.fromRGB(230,230,230)
 local COLOR_PLACEH   = Color3.fromRGB(160,160,160)
 local COLOR_INPUT    = Color3.fromRGB(50,50,50)
+local COLOR_FOOTER   = Color3.fromRGB(30, 30, 30)
 local FONT_MAIN      = Enum.Font.Gotham
 local FONT_BOLD      = Enum.Font.GothamBold
 
@@ -51,7 +52,7 @@ local gui = Create("ScreenGui", {
 -- Main Panel (smaller for mobile)
 local frame = Create("Frame", {
     Parent = gui,
-    Size = UDim2.new(0, 280, 0, 160),
+    Size = UDim2.new(0, 280, 0, 180),
     Position = UDim2.new(0.5, -140, 0.5, -115),
     BackgroundColor3 = COLOR_BG,
     BorderColor3 = COLOR_BORDER,
@@ -60,7 +61,7 @@ local frame = Create("Frame", {
 })
 Create("UICorner", {Parent=frame, CornerRadius=UDim.new(0, 14)})
 
--- Title bar
+-- Title bar (DRAGGABLE AREA!)
 local titleBar = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(1,0,0,32),
@@ -409,7 +410,21 @@ end)
 petBtn.MouseEnter:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 
--- === STATIC (NON-DRAGGABLE) DRAG HANDLE (visual only, floating) ===
+-- === VISIBLE FOOTER ===
+local footerHeight = 28
+
+local footer = Instance.new("Frame")
+footer.Name = "Footer"
+footer.Parent = frame
+footer.Size = UDim2.new(1, 0, 0, footerHeight)
+footer.Position = UDim2.new(0, 0, 1, -footerHeight)
+footer.BackgroundColor3 = COLOR_BG
+footer.BorderSizePixel = 0
+footer.ZIndex = 2
+local footerCorner = Instance.new("UICorner", footer)
+footerCorner.CornerRadius = UDim.new(0, 14)
+
+-- === FLOATING VISUAL HANDLE ===
 local handleWidth, handleHeight = 64, 6
 local overlap = 3 -- amount to stick out below the panel
 
@@ -425,3 +440,26 @@ dragHandle.ZIndex = 10
 dragHandle.Active = false -- not draggable
 local handleCorner = Instance.new("UICorner", dragHandle)
 handleCorner.CornerRadius = UDim.new(1, 3)
+
+-- === MAKE ONLY TOP BAR DRAGGABLE (desktop & mobile) ===
+local dragging = false
+local dragStart, startPos
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+titleBar.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
