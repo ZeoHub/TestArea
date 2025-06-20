@@ -6,18 +6,18 @@ local MESSAGE_TEXT = "You can only place your pets in your garden!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 12
+local MESSAGE_SIZE = 5
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_BG_TRANS = 0.85
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_FADE_WAIT = 0.3 -- time between each batch fade
+local MESSAGE_LIFETIME = 1.2
 local MSG_ADD_COOLDOWN = 0.13
 
-local BATCH_SIZE = 5    -- How many messages to fade at once
-local SPAM_MAX = 20     -- Max messages in stack
+local MAX_VISIBLE_STACK = 5
+local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
@@ -33,7 +33,6 @@ msgGui.Parent = gui
 
 local activeMessages = {}
 local lastMsgTime = 0
-local batchFaderRunning = false
 
 local function isPetTool(tool)
     if not tool or not tool.Name then return false end
@@ -49,57 +48,34 @@ end
 local function restackMessages()
     for i, msgFrame in ipairs(activeMessages) do
         msgFrame.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP), 0)
+        msgFrame.Visible = i > #activeMessages - MAX_VISIBLE_STACK
     end
 end
 
-local function fadeBatch(batch)
-    for _,msgFrame in ipairs(batch) do
-        local msg = msgFrame:FindFirstChildOfClass("TextLabel")
-        game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
-        if msg then
-            game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-                TextTransparency = 1,
-                TextStrokeTransparency = 1
-            }):Play()
-        end
+local function fadeAndRemoveMessage(msgFrame)
+    local msg = msgFrame:FindFirstChildOfClass("TextLabel")
+    game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
+    if msg then
+        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
+            TextTransparency = 1,
+            TextStrokeTransparency = 1
+        }):Play()
     end
     task.wait(MESSAGE_FADE_TIME + 0.01)
-    for _,msgFrame in ipairs(batch) do
-        msgFrame:Destroy()
-        for i, m in ipairs(activeMessages) do
-            if m == msgFrame then
-                table.remove(activeMessages, i)
-                break
-            end
+    msgFrame:Destroy()
+    for i, m in ipairs(activeMessages) do
+        if m == msgFrame then
+            table.remove(activeMessages, i)
+            break
         end
     end
     restackMessages()
-end
-
-local function batchFader()
-    if batchFaderRunning then return end
-    batchFaderRunning = true
-    while #activeMessages > 0 do
-        if #activeMessages >= BATCH_SIZE then
-            local batch = {}
-            for i = 1, BATCH_SIZE do
-                table.insert(batch, activeMessages[i])
-            end
-            fadeBatch(batch)
-            task.wait(MESSAGE_FADE_WAIT)
-        else
-            fadeBatch({table.unpack(activeMessages)})
-        end
-    end
-    batchFaderRunning = false
 end
 
 local function showMessage(text)
     if #activeMessages >= SPAM_MAX then return end
     if tick() - lastMsgTime < MSG_ADD_COOLDOWN then return end
     lastMsgTime = tick()
-
-    restackMessages()
 
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 400, 0, 18)
@@ -140,14 +116,11 @@ local function showMessage(text)
     table.insert(activeMessages, bg)
     restackMessages()
 
-    -- Start batch fader if not running, with delay before batch fade starts (to allow for spamming)
-    if not batchFaderRunning then
-        task.spawn(function()
-            -- Wait before starting batch fades (0.5s after first message, or adjust as you like)
-            task.wait(0.5)
-            batchFader()
-        end)
-    end
+    -- Each message fades after its own lifetime
+    task.spawn(function()
+        task.wait(MESSAGE_LIFETIME)
+        fadeAndRemoveMessage(bg)
+    end)
 end
 
 -- Utility: returns true if input is on a GUI button
