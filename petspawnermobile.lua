@@ -121,7 +121,7 @@ Create("TextLabel", {
     Size = UDim2.new(1,0,0,18),
     Position = UDim2.new(0,0,0,6),
     BackgroundTransparency = 1,
-    Text = "Settings (Minimal Demo)",
+    Text = "Settings",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -134,6 +134,18 @@ Create("TextLabel", {
     Position = UDim2.new(0,0,0,28),
     BackgroundTransparency = 1,
     Text = "discord.gg/deeznuts",
+    TextColor3 = COLOR_TEXT,
+    Font = FONT_MAIN,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 21
+})
+Create("TextLabel", {
+    Parent = settingsPopup,
+    Size = UDim2.new(1,0,0,18),
+    Position = UDim2.new(0,0,0,28),
+    BackgroundTransparency = 1,
+    Text = "@jandelofficialacc",
     TextColor3 = COLOR_TEXT,
     Font = FONT_MAIN,
     TextSize = 10,
