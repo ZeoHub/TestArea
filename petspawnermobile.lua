@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels and an overlapping drag handle below the GUI)
+-- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels and a floating visual-only drag handle)
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -194,7 +194,7 @@ Create("TextLabel", {
     Size = UDim2.new(0, 36, 0, 12),
     Position = UDim2.new(0, 18, 0, 2),
     BackgroundTransparency = 1,
-    Text = "🐾 Pets",    -- emoji added!
+    Text = "🐾 Pets",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -291,7 +291,7 @@ Create("TextLabel", {
     Size = UDim2.new(0.4, -6, 0, 10),
     Position = UDim2.new(0, 22, 0, 34),
     BackgroundTransparency = 1,
-    Text = "⚖️ KG",  -- emoji added!
+    Text = "⚖️ KG",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -302,7 +302,7 @@ Create("TextLabel", {
     Size = UDim2.new(0.4, -6, 0, 10),
     Position = UDim2.new(0.6, 0, 0, 34),
     BackgroundTransparency = 1,
-    Text = "⏰ Age", -- emoji added!
+    Text = "⏰ Age",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -409,7 +409,7 @@ end)
 petBtn.MouseEnter:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 
--- === OVERLAPPING DRAG HANDLE (floating below GUI, like reference image) ===
+-- === STATIC (NON-DRAGGABLE) DRAG HANDLE (visual only, floating) ===
 local handleWidth, handleHeight = 64, 6
 local overlap = 3 -- amount to stick out below the panel
 
@@ -419,36 +419,9 @@ dragHandle.Parent = frame
 dragHandle.Size = UDim2.new(0, handleWidth, 0, handleHeight)
 dragHandle.Position = UDim2.new(0.5, -handleWidth/2, 1, -math.floor(handleHeight/2) + overlap)
 dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
-dragHandle.BackgroundTransparency = 0
+dragHandle.BackgroundTransparency = 0 -- fully visible
 dragHandle.BorderSizePixel = 0
 dragHandle.ZIndex = 10
+dragHandle.Active = false -- not draggable
 local handleCorner = Instance.new("UICorner", dragHandle)
 handleCorner.CornerRadius = UDim.new(1, 3)
-
--- Make the handle draggable (mobile & desktop)
-local dragging = false
-local dragStart, startPos
-
-local function onDragInput(input)
-    if not dragging then return end
-    local delta = input.Position - dragStart
-    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-dragHandle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-dragHandle.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        onDragInput(input)
-    end
-end)
