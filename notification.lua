@@ -99,7 +99,7 @@ local function showMessage(text)
     lastMsgTime = tick()
 
     local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(0, 400, 0, 22)
+    bg.Size = UDim2.new(0, 300, 0, 22)
     bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
     bg.BackgroundColor3 = MESSAGE_BG_COLOR
     bg.BackgroundTransparency = 1 -- will fade in!
