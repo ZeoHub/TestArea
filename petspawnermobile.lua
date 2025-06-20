@@ -59,7 +59,7 @@ local frame = Create("Frame", {
 })
 Create("UICorner", {Parent=frame, CornerRadius=UDim.new(0, 14)})
 
--- Title bar (DRAGGABLE AREA!)
+-- Title bar
 local titleBar = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(1,0,0,32),
@@ -435,25 +435,31 @@ dragHandle.Active = false
 local handleCorner = Instance.new("UICorner", dragHandle)
 handleCorner.CornerRadius = UDim.new(1, 3)
 
--- === MAKE ONLY TOP BAR DRAGGABLE (desktop & mobile) ===
+-- === DRAG LOGIC (WHOLE PANEL & FOOTER, MOBILE AND DESKTOP) ===
 local dragging = false
 local dragStart, startPos
 
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-titleBar.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
+-- Mobile/desktop: drag from anywhere on the frame or the footer
+local function handleDrag(obj)
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    obj.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+handleDrag(frame)
+handleDrag(footer)
