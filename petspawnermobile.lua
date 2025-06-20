@@ -1,6 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version with Sidebar Icons
--- Draggable bottom bar for moving the UI (desktop & mobile)
--- Sidebar labels use icons just like the reference screenshot
+-- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels)
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -14,9 +12,9 @@ local function Create(class, props)
     return inst
 end
 
-local DEFAULT_PET_ICON = "rbxassetid://8560914931" -- Paw icon
-local KG_ICON = "rbxassetid://6031264868"          -- Scale/weight icon
-local AGE_ICON = "rbxassetid://6031068425"         -- Clock icon
+local DEFAULT_PET_ICON = "rbxassetid://103674464183898"
+local KG_ICON = "rbxassetid://6031264868"
+local AGE_ICON = "rbxassetid://6031265989"
 local DICE_ICON = "rbxassetid://6031071050"
 
 -- Colors & Font
@@ -54,8 +52,8 @@ local gui = Create("ScreenGui", {
 -- Main Panel (smaller for mobile)
 local frame = Create("Frame", {
     Parent = gui,
-    Size = UDim2.new(0, 280, 0, 180),
-    Position = UDim2.new(0.5, -140, 0.5, -90),
+    Size = UDim2.new(0, 280, 0, 160),
+    Position = UDim2.new(0.5, -140, 0.5, -115),
     BackgroundColor3 = COLOR_BG,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -175,7 +173,7 @@ closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 -- Input panel (smaller, repositioned)
 local panel = Create("Frame", {
     Parent = frame,
-    Size = UDim2.new(1, -18, 0, 120),
+    Size = UDim2.new(1, -18, 0, 100),
     Position = UDim2.new(0, 9, 0, 40),
     BackgroundColor3 = COLOR_PANEL,
     BorderColor3 = COLOR_BORDER,
@@ -183,47 +181,41 @@ local panel = Create("Frame", {
 })
 Create("UICorner", {Parent=panel, CornerRadius=UDim.new(0, 8)})
 
--- === Sidebar-style labels with icon and text ===
-local function sidebarRow(parent, icon_asset, label_text, y_offset)
-    local row = Create("Frame", {
-        Parent = parent,
-        Size = UDim2.new(1, 0, 0, 20),
-        Position = UDim2.new(0, 0, 0, y_offset),
-        BackgroundTransparency = 1,
-    })
-    Create("ImageLabel", {
-        Parent = row,
-        Size = UDim2.new(0,16,0,16),
-        Position = UDim2.new(0, 2, 0, 2),
-        BackgroundTransparency = 1,
-        Image = icon_asset,
-        ZIndex = 10
-    })
-    local label = Create("TextLabel", {
-        Parent = row,
-        Size = UDim2.new(1, -24, 1, 0),
-        Position = UDim2.new(0, 24, 0, 0),
-        BackgroundTransparency = 1,
-        Text = label_text,
-        TextColor3 = COLOR_TEXT,
-        Font = FONT_BOLD,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 10,
-    })
-    return row, label
-end
+-- Pet Icon Label ("🐾 Pets" with emoji above dropdown)
+local petLabelIcon = Create("ImageLabel", {
+    Parent = panel,
+    Size = UDim2.new(0,12,0,12),
+    Position = UDim2.new(0, 5, 0, 2),
+    BackgroundTransparency = 1,
+    Image = DEFAULT_PET_ICON,
+    ZIndex = 10
+})
+Create("TextLabel", {
+    Parent = panel,
+    Size = UDim2.new(0, 36, 0, 12),
+    Position = UDim2.new(0, 18, 0, 2),
+    BackgroundTransparency = 1,
+    Text = "🐾 Pets",    -- emoji added!
+    TextColor3 = COLOR_TEXT,
+    Font = FONT_BOLD,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
 
--- Pets, KG, Age sidebar labels
-local petsRow, petsLabel = sidebarRow(panel, DEFAULT_PET_ICON, "Pets", 4)
-local kgRow, kgLabel = sidebarRow(panel, KG_ICON, "KG", 26)
-local ageRow, ageLabel = sidebarRow(panel, AGE_ICON, "Age", 48)
-
--- Pet Dropdown (right of sidebar label)
+-- Pet Dropdown
+local dropdownOpen = false
+local petIconImg = Create("ImageLabel", {
+    Parent = panel,
+    Size = UDim2.new(0,13,0,13),
+    Position = UDim2.new(0, 7, 0, 16),
+    BackgroundTransparency = 1,
+    Image = DEFAULT_PET_ICON,
+    ZIndex = 10
+})
 local dropdownBtn = Create("TextButton", {
     Parent = panel,
-    Size = UDim2.new(0.5, 60, 0, 18),
-    Position = UDim2.new(0, 80, 0, 4),
+    Size = UDim2.new(1, -30, 0, 18),
+    Position = UDim2.new(0, 22, 0, 14),
     BackgroundColor3 = COLOR_BG,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -233,7 +225,6 @@ local dropdownBtn = Create("TextButton", {
     Text = selectedPet,
     AutoButtonColor = true,
     ClipsDescendants = true,
-    ZIndex = 11,
 })
 Create("UICorner", {Parent=dropdownBtn, CornerRadius=UDim.new(0,4)})
 
@@ -242,8 +233,8 @@ local maxVisiblePets = 5
 local dropdownHeight = maxVisiblePets * 16 + 2
 local dropdownFrameBorder = Create("Frame", {
     Parent = panel,
-    Size = UDim2.new(0.5, 60, 0, dropdownHeight),
-    Position = UDim2.new(0, 80, 0, 22),
+    Size = UDim2.new(1, -30, 0, dropdownHeight),
+    Position = UDim2.new(0, 22, 0, 32),
     BackgroundTransparency = 1,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -267,7 +258,6 @@ Create("UICorner", {Parent=dropdownFrame, CornerRadius=UDim.new(0,4)})
 local uiList = Instance.new("UIListLayout", dropdownFrame)
 uiList.SortOrder = Enum.SortOrder.LayoutOrder
 
-local dropdownOpen = false
 for i,pet in ipairs(pets) do
     local opt = Create("TextButton", {
         Parent = dropdownFrame,
@@ -285,6 +275,7 @@ for i,pet in ipairs(pets) do
     opt.MouseButton1Click:Connect(function()
         selectedPet = pet
         dropdownBtn.Text = pet
+        petIconImg.Image = DEFAULT_PET_ICON
         dropdownFrameBorder.Visible = false
         dropdownOpen = false
     end)
@@ -295,11 +286,35 @@ dropdownBtn.MouseButton1Click:Connect(function()
     dropdownFrameBorder.Visible = dropdownOpen
 end)
 
--- KG input (right of icon/label)
+-- Field labels for KG and AGE (with emojis)
+Create("TextLabel", {
+    Parent = panel,
+    Size = UDim2.new(0.4, -6, 0, 10),
+    Position = UDim2.new(0, 22, 0, 34),
+    BackgroundTransparency = 1,
+    Text = "⚖️ KG",  -- emoji added!
+    TextColor3 = COLOR_TEXT,
+    Font = FONT_BOLD,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+})
+Create("TextLabel", {
+    Parent = panel,
+    Size = UDim2.new(0.4, -6, 0, 10),
+    Position = UDim2.new(0.6, 0, 0, 34),
+    BackgroundTransparency = 1,
+    Text = "⏰ Age", -- emoji added!
+    TextColor3 = COLOR_TEXT,
+    Font = FONT_BOLD,
+    TextSize = 10,
+    TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+-- KG input & icon
 local petKgBox = Create("TextBox", {
     Parent = panel,
-    Size = UDim2.new(0.5, 60, 0, 16),
-    Position = UDim2.new(0, 80, 0, 26),
+    Size = UDim2.new(0.4, -18, 0, 15),
+    Position = UDim2.new(0, 34, 0, 45),
     BackgroundColor3 = COLOR_INPUT,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -309,16 +324,23 @@ local petKgBox = Create("TextBox", {
     PlaceholderText = "1",
     PlaceholderColor3 = COLOR_PLACEH,
     Text = "",
-    ClearTextOnFocus = false,
-    ZIndex = 11,
+    ClearTextOnFocus = false
 })
 Create("UICorner", {Parent=petKgBox, CornerRadius=UDim.new(0,3)})
+Create("ImageLabel", {
+    Parent = panel,
+    Size = UDim2.new(0,13,0,13),
+    Position = UDim2.new(0, 22, 0, 46),
+    BackgroundTransparency = 1,
+    Image = KG_ICON,
+    ZIndex = 10
+})
 
--- Age input (right of icon/label)
+-- Age input & icon
 local petAgeBox = Create("TextBox", {
     Parent = panel,
-    Size = UDim2.new(0.5, 60, 0, 16),
-    Position = UDim2.new(0, 80, 0, 48),
+    Size = UDim2.new(0.4, -18, 0, 15),
+    Position = UDim2.new(0.6, 18, 0, 45),
     BackgroundColor3 = COLOR_INPUT,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -328,16 +350,23 @@ local petAgeBox = Create("TextBox", {
     PlaceholderText = "1",
     PlaceholderColor3 = COLOR_PLACEH,
     Text = "",
-    ClearTextOnFocus = false,
-    ZIndex = 11,
+    ClearTextOnFocus = false
 })
 Create("UICorner", {Parent=petAgeBox, CornerRadius=UDim.new(0,3)})
+Create("ImageLabel", {
+    Parent = panel,
+    Size = UDim2.new(0,13,0,13),
+    Position = UDim2.new(0.6, 5, 0, 46),
+    BackgroundTransparency = 1,
+    Image = AGE_ICON,
+    ZIndex = 10
+})
 
 -- Dice icon button centered between KG and Age
 local diceBtn = Create("ImageButton", {
     Parent = panel,
-    Size = UDim2.new(0,18,0,18),
-    Position = UDim2.new(0, 126, 0, 69),
+    Size = UDim2.new(0,16,0,16),
+    Position = UDim2.new(0.5, -8, 0, 45),
     BackgroundColor3 = COLOR_BTN,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -357,7 +386,7 @@ diceBtn.MouseLeave:Connect(function() diceBtn.BackgroundColor3 = COLOR_BTN end)
 local petBtn = Create("TextButton", {
     Parent = panel,
     Size = UDim2.new(1, -10, 0, 18),
-    Position = UDim2.new(0, 5, 0, 92),
+    Position = UDim2.new(0, 5, 0, 68),
     BackgroundColor3 = COLOR_BTN,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -365,8 +394,7 @@ local petBtn = Create("TextButton", {
     TextColor3 = Color3.fromRGB(0,0,0),
     Font = FONT_BOLD,
     TextSize = 11,
-    AutoButtonColor = true,
-    ZIndex = 11,
+    AutoButtonColor = true
 })
 Create("UICorner", {Parent=petBtn, CornerRadius=UDim.new(0,4)})
 petBtn.MouseButton1Click:Connect(function()
@@ -465,7 +493,7 @@ end)
 local dragging, dragStart, startPos
 frame.InputBegan:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
-      and input.Position.Y-frame.AbsolutePosition.Y < 32 then
+      and input.Position.Y-frame.AbsolutePosition.Y < 32 then -- top bar is 32 tall
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
