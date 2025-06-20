@@ -6,7 +6,7 @@ local MESSAGE_TEXT = "You can only place your pets in your garden!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 5
+local MESSAGE_SIZE = 12
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_BG_TRANS = 0.85
@@ -18,7 +18,7 @@ local MAX_VISIBLE_STACK = 5
 local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.035
+local MESSAGE_Y_STEP = 0.04
 local MESSAGE_PADDING = 8
 local MSG_COOLDOWN = 0.13
 
