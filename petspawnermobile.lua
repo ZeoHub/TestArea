@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels and minimal drag handle footer)
+-- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels and an overlapping drag handle below the GUI)
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -409,29 +409,19 @@ end)
 petBtn.MouseEnter:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 
--- === BOTTOM FOOTER + DRAG HANDLE (like reference image) ===
-local footerHeight = 28
+-- === OVERLAPPING DRAG HANDLE (floating below GUI, like reference image) ===
+local handleWidth, handleHeight = 64, 6
+local overlap = 3 -- amount to stick out below the panel
 
--- Footer background
-local footer = Instance.new("Frame")
-footer.Name = "Footer"
-footer.Parent = frame
-footer.Size = UDim2.new(1, 0, 0, footerHeight)
-footer.Position = UDim2.new(0, 0, 1, -footerHeight)
-footer.BackgroundColor3 = COLOR_BG
-footer.BorderSizePixel = 0
-local footerCorner = Instance.new("UICorner", footer)
-footerCorner.CornerRadius = UDim.new(0, 14)
-
--- Drag handle (the white line)
 local dragHandle = Instance.new("Frame")
 dragHandle.Name = "DragHandle"
-dragHandle.Parent = footer
-dragHandle.Size = UDim2.new(0, 64, 0, 6) -- width/height for the white line
-dragHandle.Position = UDim2.new(0.5, -32, 0, 8)
+dragHandle.Parent = frame
+dragHandle.Size = UDim2.new(0, handleWidth, 0, handleHeight)
+dragHandle.Position = UDim2.new(0.5, -handleWidth/2, 1, -math.floor(handleHeight/2) + overlap)
 dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
 dragHandle.BackgroundTransparency = 0
 dragHandle.BorderSizePixel = 0
+dragHandle.ZIndex = 10
 local handleCorner = Instance.new("UICorner", dragHandle)
 handleCorner.CornerRadius = UDim.new(1, 3)
 
