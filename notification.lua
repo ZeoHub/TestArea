@@ -2,8 +2,8 @@ local MESSAGE_TEXT = "You are not holding an item!"
 local MESSAGE_FONT = Enum.Font.GothamBold
 local MESSAGE_SIZE = 14
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
-local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark, not full black
-local MESSAGE_BG_TRANS = 0.92 -- More subtle/transparent
+local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark background
+local MESSAGE_BG_TRANS = 0.92 -- High transparency for a subtle look
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
@@ -15,7 +15,7 @@ local BATCH_SIZE = 5
 
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
-local MESSAGE_PADDING = 12 -- Make padding a little larger for subtle look
+local MESSAGE_PADDING = 12 -- More padding for a softer look
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -107,9 +107,9 @@ local function showMessage(text)
     bg.ZIndex = 100
     bg.Parent = msgGui
 
-    -- Optional: round the corners for a modern/subtle look
+    -- Rounded corners
     local uic = Instance.new("UICorner")
-    uic.CornerRadius = UDim.new(0, 8)
+    uic.CornerRadius = UDim.new(0, 22) -- Maximum roundness for pill shape
     uic.Parent = bg
 
     local pad = Instance.new("UIPadding")
