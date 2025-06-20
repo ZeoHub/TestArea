@@ -1,4 +1,5 @@
 -- Pet Tool Hold Message Popup (single and spam tap/click) by ZeoHub, with TEST BUTTON
+-- FIXED: Removed invalid TextStrokeThickness property (see image 5 error)
 
 -- CONFIGURABLE PET TOOL NAMES (case insensitive)
 local PET_TOOL_NAMES = {
@@ -12,7 +13,6 @@ local MESSAGE_FONT = Enum.Font.GothamBold
 local MESSAGE_SIZE = 26
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_STROKE_THICKNESS = 2
 local MESSAGE_FADE_TIME = 0.3
 local MESSAGE_LIFETIME = 1.3
 local SPAM_MAX = 10 -- how many messages max can be spammed
@@ -54,7 +54,6 @@ local function showMessage()
     msg.TextColor3 = MESSAGE_COLOR
     msg.TextStrokeTransparency = 0
     msg.TextStrokeColor3 = MESSAGE_STROKE_COLOR
-    msg.TextStrokeThickness = MESSAGE_STROKE_THICKNESS
     msg.TextWrapped = true
     msg.ZIndex = 100
     msg.Parent = msgGui
