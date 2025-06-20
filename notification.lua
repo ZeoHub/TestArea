@@ -25,7 +25,7 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
-local activeMessages = {} -- {frame=Frame, created=number, faded=false, batchMode=false}
+local activeMessages = {} -- {frame=Frame, created=number, faded=false, batchMode=bool}
 local lastMsgTime = 0
 local batchFaderRunning = false
 
@@ -71,9 +71,9 @@ local function batchFader()
     if batchFaderRunning then return end
     batchFaderRunning = true
     task.spawn(function()
-        while #activeMessages >= STACK_BATCH do
+        while true do
+            if #activeMessages < STACK_BATCH then break end
             local now = tick()
-            local batchCount = math.min(STACK_BATCH, #activeMessages)
             local oldest = activeMessages[1]
             local oldestCreated = oldest.created
             local toWait = MESSAGE_LIFETIME - (now - oldestCreated)
@@ -83,9 +83,13 @@ local function batchFader()
             -- Fade the oldest batch
             local batch = {}
             for i = 1, math.min(STACK_BATCH, #activeMessages) do
-                table.insert(batch, activeMessages[i])
+                if activeMessages[i].batchMode then
+                    table.insert(batch, activeMessages[i])
+                end
             end
-            fadeBatch(batch)
+            if #batch > 0 then
+                fadeBatch(batch)
+            end
             if #activeMessages >= STACK_BATCH then
                 task.wait(BATCH_FADE_DELAY)
             end
@@ -98,6 +102,8 @@ local function showMessage(text)
     if #activeMessages >= STACK_MAX then return end
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
+
+    local isBatchMode = (#activeMessages + 1) >= STACK_BATCH
 
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 400, 0, 18)
@@ -135,19 +141,18 @@ local function showMessage(text)
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
 
-    local msgTbl = {frame = bg, created = tick(), faded = false}
+    local msgTbl = {frame = bg, created = tick(), faded = false, batchMode = isBatchMode}
     table.insert(activeMessages, msgTbl)
     restackMessages()
 
-    if #activeMessages < STACK_BATCH then
-        -- If not enough for a batch, fade individually
+    if isBatchMode then
+        batchFader()
+    else
+        -- Not in batch mode: fade individually
         task.spawn(function()
             task.wait(MESSAGE_LIFETIME)
             fadeMessage(msgTbl)
         end)
-    else
-        -- If enough for batch, start batch fader (if not already running)
-        batchFader()
     end
 end
 
