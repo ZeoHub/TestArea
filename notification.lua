@@ -3,13 +3,13 @@ local PET_TOOL_NAMES = {
 }
 
 local MESSAGE_TEXT = "You need a divine pet to make it work"
-local MESSAGE_FONT = Enum.Font.Gotham -- Gotham: clean, modern, rounded sans-serif
+local MESSAGE_FONT = Enum.Font.Gotham -- Gotham for modern/pro look
 local MESSAGE_SIZE = 15
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
-local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark background
-local MESSAGE_BG_TRANS = 0.92 -- High transparency for a subtle look
+local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20)
+local MESSAGE_BG_TRANS = 0.92
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_STROKE_TRANS = 0.1 -- Slightly visible stroke
+local MESSAGE_STROKE_TRANS = 0.1
 local MESSAGE_FADE_TIME = 0.25
 local MESSAGE_LIFETIME = 3
 local BATCH_FADE_DELAY = 0.35
@@ -19,7 +19,7 @@ local BATCH_SIZE = 5
 
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
-local MESSAGE_PADDING = 12 -- More padding for a softer look
+local MESSAGE_PADDING = 12
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -29,7 +29,7 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
-local activeMessages = {} -- {frame, created, faded, claimed}
+local activeMessages = {}
 local lastMsgTime = 0
 
 local function isPetTool(tool)
@@ -74,27 +74,22 @@ local function fadeMessage(msgTbl)
     restackMessages()
 end
 
--- Start the forever batch fader coroutine exactly once!
 local batchFaderStarted = false
 local function startBatchFader()
     if batchFaderStarted then return end
     batchFaderStarted = true
     task.spawn(function()
         while true do
-            -- Only fade full batches
             while #activeMessages >= BATCH_SIZE do
-                -- Only claim the first unclaimed batch
                 local batch = {}
                 for i = 1, BATCH_SIZE do
                     local msg = activeMessages[i]
                     batch[i] = msg
                     msg.claimed = true
                 end
-                -- Wait for lifetime of oldest in batch
                 local oldest = batch[1]
                 local toWait = MESSAGE_LIFETIME - (tick() - oldest.created)
                 if toWait > 0 then task.wait(toWait) end
-                -- Fade whole batch at once
                 for _, msg in ipairs(batch) do
                     fadeMessage(msg)
                 end
@@ -102,7 +97,6 @@ local function startBatchFader()
                     task.wait(BATCH_FADE_DELAY)
                 end
             end
-            -- No full batch available, check every 0.1s
             task.wait(0.1)
         end
     end)
@@ -117,17 +111,15 @@ local function showMessage(text)
     bg.Size = UDim2.new(0, 250, 0, 17)
     bg.Position = UDim2.new(0.5, -125, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
     bg.BackgroundColor3 = MESSAGE_BG_COLOR
-    bg.BackgroundTransparency = 1 -- will fade in!
+    bg.BackgroundTransparency = 1
     bg.BorderSizePixel = 0
     bg.ZIndex = 100
     bg.Parent = msgGui
 
-    -- Rounded corners
     local uic = Instance.new("UICorner")
-    uic.CornerRadius = UDim.new(0, 22) -- Maximum roundness for pill shape
+    uic.CornerRadius = UDim.new(0, 22)
     uic.Parent = bg
 
-    -- Subtle border
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(40,40,40)
     stroke.Thickness = 1.5
@@ -153,7 +145,6 @@ local function showMessage(text)
     msg.ZIndex = 101
     msg.Parent = bg
 
-    -- Fade in
     game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = MESSAGE_BG_TRANS}):Play()
     msg.TextTransparency = 1
     msg.TextStrokeTransparency = 1
@@ -165,11 +156,7 @@ local function showMessage(text)
     local msgTbl = {frame = bg, created = tick(), faded = false, claimed = false}
     table.insert(activeMessages, msgTbl)
     restackMessages()
-
-    -- Always ensure batch fader is running
     startBatchFader()
-
-    -- If not claimed by a batch after MESSAGE_LIFETIME, fade individually
     task.spawn(function()
         task.wait(MESSAGE_LIFETIME)
         if not msgTbl.faded and not msgTbl.claimed then
@@ -193,12 +180,10 @@ local function handlePetToolMessage()
     end
 end
 
--- Example input hook for testing:
 local UserInputService = game:GetService("UserInputService")
 local mouse = player:GetMouse()
 mouse.Button1Down:Connect(handlePetToolMessage)
 
--- TEST BUTTON (for easy testing)
 do
     local testBtn = Instance.new("TextButton")
     testBtn.Name = "TestPetMsgBtn"
