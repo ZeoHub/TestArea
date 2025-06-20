@@ -2,8 +2,8 @@ local MESSAGE_TEXT = "You are not holding an item!"
 local MESSAGE_FONT = Enum.Font.GothamBold
 local MESSAGE_SIZE = 14
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
-local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_BG_TRANS = 0.85
+local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark, not full black
+local MESSAGE_BG_TRANS = 0.92 -- More subtle/transparent
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
@@ -15,9 +15,7 @@ local BATCH_SIZE = 5
 
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
-local MESSAGE_PADDING = 8
-local FEATHER_WIDTH = 24 -- width in pixels for the soft edge effect
-local FEATHER_STEPS = 8  -- more steps = smoother fade, but more objects
+local MESSAGE_PADDING = 12 -- Make padding a little larger for subtle look
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -95,41 +93,13 @@ local function startBatchFader()
     end)
 end
 
--- Soft/Faux fading edge using code only
-local function createSoftEdge(parentFrame, bgColor, bgTransparency)
-    -- Left side
-    for i = 1, FEATHER_STEPS do
-        local stepFrac = i / FEATHER_STEPS
-        local edge = Instance.new("Frame")
-        edge.Size = UDim2.new(0, FEATHER_WIDTH / FEATHER_STEPS, 1, 0)
-        edge.Position = UDim2.new(0, (i-1) * (FEATHER_WIDTH / FEATHER_STEPS), 0, 0)
-        edge.BackgroundColor3 = bgColor
-        edge.BorderSizePixel = 0
-        edge.BackgroundTransparency = bgTransparency + (1 - bgTransparency) * stepFrac * 0.9
-        edge.ZIndex = parentFrame.ZIndex + 1
-        edge.Parent = parentFrame
-    end
-    -- Right side
-    for i = 1, FEATHER_STEPS do
-        local stepFrac = i / FEATHER_STEPS
-        local edge = Instance.new("Frame")
-        edge.Size = UDim2.new(0, FEATHER_WIDTH / FEATHER_STEPS, 1, 0)
-        edge.Position = UDim2.new(1, -FEATHER_WIDTH + (i-1) * (FEATHER_WIDTH / FEATHER_STEPS), 0, 0)
-        edge.BackgroundColor3 = bgColor
-        edge.BorderSizePixel = 0
-        edge.BackgroundTransparency = bgTransparency + (1 - bgTransparency) * stepFrac * 0.9
-        edge.ZIndex = parentFrame.ZIndex + 1
-        edge.Parent = parentFrame
-    end
-end
-
 local function showMessage(text)
     if #activeMessages >= STACK_MAX then return end
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
 
     local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(0, 400, 0, 18)
+    bg.Size = UDim2.new(0, 400, 0, 22)
     bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
     bg.BackgroundColor3 = MESSAGE_BG_COLOR
     bg.BackgroundTransparency = 1 -- will fade in!
@@ -137,8 +107,10 @@ local function showMessage(text)
     bg.ZIndex = 100
     bg.Parent = msgGui
 
-    -- Create soft (faux faded) edges with code only
-    createSoftEdge(bg, MESSAGE_BG_COLOR, MESSAGE_BG_TRANS)
+    -- Optional: round the corners for a modern/subtle look
+    local uic = Instance.new("UICorner")
+    uic.CornerRadius = UDim.new(0, 8)
+    uic.Parent = bg
 
     local pad = Instance.new("UIPadding")
     pad.PaddingLeft = UDim.new(0, MESSAGE_PADDING)
