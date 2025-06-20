@@ -9,7 +9,7 @@ local MESSAGE_TEXT = "You need have a original pet to dupe this pet spawner!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 26
+local MESSAGE_SIZE = 20
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_FADE_TIME = 0.3
