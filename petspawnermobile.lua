@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Footer always visible, floating handle, whole panel draggable (mobile & desktop, smooth)
+-- Pet Spawner Premium — Draggable by Floating Bottom Bar, Universal Mobile/Desktop, Overlapping White Handle
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -408,62 +408,59 @@ end)
 petBtn.MouseEnter:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 
--- === VISIBLE FOOTER ===
-local footerHeight = 28
-local footer = Instance.new("Frame")
-footer.Name = "Footer"
-footer.Parent = frame
-footer.Size = UDim2.new(1, 0, 0, footerHeight)
-footer.Position = UDim2.new(0, 0, 1, -footerHeight)
-footer.BackgroundColor3 = COLOR_BG
-footer.BorderSizePixel = 0
-footer.ZIndex = 2
-local footerCorner = Instance.new("UICorner", footer)
-footerCorner.CornerRadius = UDim.new(0, 14)
-
--- === FLOATING VISUAL HANDLE ===
-local handleWidth, handleHeight = 64, 6
+-- === DRAGGABLE FLOATING HANDLE (BOTTOM BAR) ===
+local resizeBarHeight = 6
 local overlap = 3
-local dragHandle = Instance.new("Frame")
-dragHandle.Name = "DragHandle"
-dragHandle.Parent = frame
-dragHandle.Size = UDim2.new(0, handleWidth, 0, handleHeight)
-dragHandle.Position = UDim2.new(0.5, -handleWidth/2, 1, -math.floor(handleHeight/2) + overlap)
-dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
-dragHandle.BackgroundTransparency = 0
-dragHandle.BorderSizePixel = 0
-dragHandle.ZIndex = 10
-dragHandle.Active = false
-local handleCorner = Instance.new("UICorner", dragHandle)
-handleCorner.CornerRadius = UDim.new(1, 3)
 
--- === DRAG LOGIC: WHOLE PANEL (MOBILE & DESKTOP), SMOOTH ===
-local dragging = false
-local dragStart, startPos
+local resizeBar = Instance.new("TextButton")
+resizeBar.Name = "MoveBar"
+resizeBar.Parent = frame
+resizeBar.Size = UDim2.new(0.3, 0, 0, resizeBarHeight)
+resizeBar.Position = UDim2.new(0.5, -(0.3*frame.Size.X.Offset)/2, 1, -math.floor(resizeBarHeight/2) + overlap)
+resizeBar.AnchorPoint = Vector2.new(0, 0)
+resizeBar.BackgroundColor3 = Color3.fromRGB(255,255,255)
+resizeBar.Text = ""
+resizeBar.AutoButtonColor = true
+resizeBar.BackgroundTransparency = 0
+resizeBar.BorderSizePixel = 0
+resizeBar.ZIndex = 100
+local resizeBarCorner = Instance.new("UICorner", resizeBar)
+resizeBarCorner.CornerRadius = UDim.new(1, 3)
 
-local function onInputBegan(input)
+resizeBar.MouseEnter:Connect(function()
+    resizeBar.BackgroundColor3 = Color3.fromRGB(200,200,200)
+end)
+resizeBar.MouseLeave:Connect(function()
+    resizeBar.BackgroundColor3 = Color3.fromRGB(255,255,255)
+end)
+
+-- Universal dragging (desktop & mobile; handle only)
+local draggingBar = false
+local dragBarStart, startBarPos
+
+local function beginDrag(input)
+    draggingBar = true
+    dragBarStart = input.Position
+    startBarPos = frame.Position
+
+    local connMove, connEnd
+    connMove = game:GetService("UserInputService").InputChanged:Connect(function(moveInput)
+        if draggingBar and (moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch) then
+            local delta = moveInput.Position - dragBarStart
+            frame.Position = UDim2.new(startBarPos.X.Scale, startBarPos.X.Offset + delta.X, startBarPos.Y.Scale, startBarPos.Y.Offset + delta.Y)
+        end
+    end)
+    connEnd = game:GetService("UserInputService").InputEnded:Connect(function(upInput)
+        if upInput.UserInputType == Enum.UserInputType.MouseButton1 or upInput.UserInputType == Enum.UserInputType.Touch then
+            draggingBar = false
+            if connMove then connMove:Disconnect() end
+            if connEnd then connEnd:Disconnect() end
+        end
+    end)
+end
+
+resizeBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
+        beginDrag(input)
     end
-end
-
-local function onInputChanged(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end
-
-local function onInputEnded(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end
-
-frame.InputBegan:Connect(onInputBegan)
-footer.InputBegan:Connect(onInputBegan)
-
-UIS.InputChanged:Connect(onInputChanged)
-UIS.InputEnded:Connect(onInputEnded)
+end)
