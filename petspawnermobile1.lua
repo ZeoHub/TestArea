@@ -1,7 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version
--- Draggable bottom bar for moving the UI (desktop & mobile)
--- Hovering the bottom bar expands/thickens and changes color
--- Touch/click drag: moves window
+-- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels)
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -124,7 +121,7 @@ Create("TextLabel", {
     Size = UDim2.new(1,0,0,18),
     Position = UDim2.new(0,0,0,6),
     BackgroundTransparency = 1,
-    Text = "Settings (Minimal Demo)",
+    Text = "Settings",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -143,6 +140,7 @@ Create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
     ZIndex = 21
 })
+
 settingsBtn.MouseButton1Click:Connect(function()
     settingsPopup.Visible = not settingsPopup.Visible
 end)
@@ -184,7 +182,7 @@ local panel = Create("Frame", {
 })
 Create("UICorner", {Parent=panel, CornerRadius=UDim.new(0, 8)})
 
--- Pet Icon Label ("Pets" with icon above dropdown)
+-- Pet Icon Label ("🐾 Pets" with emoji above dropdown)
 local petLabelIcon = Create("ImageLabel", {
     Parent = panel,
     Size = UDim2.new(0,12,0,12),
@@ -198,7 +196,7 @@ Create("TextLabel", {
     Size = UDim2.new(0, 36, 0, 12),
     Position = UDim2.new(0, 18, 0, 2),
     BackgroundTransparency = 1,
-    Text = "Pets",
+    Text = "🦝 Pets",    -- emoji added!
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -289,13 +287,13 @@ dropdownBtn.MouseButton1Click:Connect(function()
     dropdownFrameBorder.Visible = dropdownOpen
 end)
 
--- Field labels for KG and AGE
+-- Field labels for KG and AGE (with emojis)
 Create("TextLabel", {
     Parent = panel,
     Size = UDim2.new(0.4, -6, 0, 10),
     Position = UDim2.new(0, 22, 0, 34),
     BackgroundTransparency = 1,
-    Text = "KG",
+    Text = "⚖️ KG",  -- emoji added!
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -306,7 +304,7 @@ Create("TextLabel", {
     Size = UDim2.new(0.4, -6, 0, 10),
     Position = UDim2.new(0.6, 0, 0, 34),
     BackgroundTransparency = 1,
-    Text = "Age",
+    Text = "⏰ Age", -- emoji added!
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -496,7 +494,7 @@ end)
 local dragging, dragStart, startPos
 frame.InputBegan:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
-      and input.Position.Y-frame.AbsolutePosition.Y < 32 then
+      and input.Position.Y-frame.AbsolutePosition.Y < 32 then -- top bar is 32 tall
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
