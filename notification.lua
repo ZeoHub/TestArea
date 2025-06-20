@@ -7,11 +7,11 @@ local MESSAGE_BG_TRANS = 0.85
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_LIFETIME = 3.5
+local MESSAGE_LIFETIME = 1.2
 local BATCH_FADE_DELAY = 0.5
 local MSG_COOLDOWN = 0.13
 local STACK_MAX = 20
-local STACK_BATCH = 5
+local BATCH_SIZE = 5
 
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
@@ -66,16 +66,17 @@ local function fadeBatch(batch)
     end
 end
 
-local function batchFader()
+local function startBatchFader()
     if batchFaderRunning then return end
     batchFaderRunning = true
     task.spawn(function()
-        while #activeMessages >= STACK_BATCH do
-            -- Always operate on the oldest batch of 5!
+        while #activeMessages >= BATCH_SIZE do
+            -- Take the oldest batch of 5 that has not already started fading
             local batch = {}
-            for i = 1, math.min(STACK_BATCH, #activeMessages) do
+            for i = 1, math.min(BATCH_SIZE, #activeMessages) do
                 table.insert(batch, activeMessages[i])
             end
+            -- Wait for the oldest in the batch to reach its lifetime
             local now = tick()
             local batchCreated = batch[1].created
             local toWait = MESSAGE_LIFETIME - (now - batchCreated)
@@ -83,7 +84,7 @@ local function batchFader()
                 task.wait(toWait)
             end
             fadeBatch(batch)
-            if #activeMessages >= STACK_BATCH then
+            if #activeMessages >= BATCH_SIZE then
                 task.wait(BATCH_FADE_DELAY)
             end
         end
@@ -136,14 +137,18 @@ local function showMessage(text)
     table.insert(activeMessages, msgTbl)
     restackMessages()
 
-    if #activeMessages >= STACK_BATCH then
-        batchFader()
-    else
-        -- Less than 5: fade individually
+    if #activeMessages < BATCH_SIZE then
+        -- If there are less than 5, fade each individually
         task.spawn(function()
             task.wait(MESSAGE_LIFETIME)
-            fadeMessage(msgTbl)
+            -- Only fade if we're still under BATCH_SIZE, otherwise batch fader will handle it
+            if #activeMessages < BATCH_SIZE and not msgTbl.faded then
+                fadeMessage(msgTbl)
+            end
         end)
+    elseif #activeMessages == BATCH_SIZE then
+        -- If we just reached a batch, start the batch fader
+        startBatchFader()
     end
 end
 
