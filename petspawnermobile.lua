@@ -143,7 +143,7 @@ Create("TextLabel", {
 Create("TextLabel", {
     Parent = settingsPopup,
     Size = UDim2.new(1,0,0,18),
-    Position = UDim2.new(0,0,0,28),
+    Position = UDim2.new(0,0,0,38),
     BackgroundTransparency = 1,
     Text = "@jandelofficialacc",
     TextColor3 = COLOR_TEXT,
