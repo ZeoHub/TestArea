@@ -25,9 +25,8 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
-local activeMessages = {} -- {frame=Frame, created=number, faded=false}
+local activeMessages = {} -- {frame, created, faded, batchId}
 local lastMsgTime = 0
-local batchFaderRunning = false
 
 local function restackMessages()
     for i, msgTbl in ipairs(activeMessages) do
@@ -66,22 +65,25 @@ local function fadeBatch(batch)
     end
 end
 
-local function startBatchFader()
+-- Ensures no overlapping batch runners, and always handles all batches in order.
+local batchFaderRunning = false
+local function runBatchFader()
     if batchFaderRunning then return end
     batchFaderRunning = true
     task.spawn(function()
-        while #activeMessages >= BATCH_SIZE do
-            -- Take the oldest batch of 5 that has not already started fading
+        while true do
+            if #activeMessages < BATCH_SIZE then break end
+            -- Get the next batch (must always be the first 5)
             local batch = {}
             for i = 1, math.min(BATCH_SIZE, #activeMessages) do
                 table.insert(batch, activeMessages[i])
             end
-            -- Wait for the oldest in the batch to reach its lifetime
+            -- Wait for the oldest message of this batch to reach its lifetime
             local now = tick()
-            local batchCreated = batch[1].created
-            local toWait = MESSAGE_LIFETIME - (now - batchCreated)
-            if toWait > 0 then
-                task.wait(toWait)
+            local oldestCreated = batch[1].created
+            local timeToWait = MESSAGE_LIFETIME - (now - oldestCreated)
+            if timeToWait > 0 then
+                task.wait(timeToWait)
             end
             fadeBatch(batch)
             if #activeMessages >= BATCH_SIZE then
@@ -138,17 +140,25 @@ local function showMessage(text)
     restackMessages()
 
     if #activeMessages < BATCH_SIZE then
-        -- If there are less than 5, fade each individually
+        -- Less than 5: fade individually, but only if we stay < BATCH_SIZE
         task.spawn(function()
+            local myRef = msgTbl
+            local myIndex
             task.wait(MESSAGE_LIFETIME)
-            -- Only fade if we're still under BATCH_SIZE, otherwise batch fader will handle it
-            if #activeMessages < BATCH_SIZE and not msgTbl.faded then
-                fadeMessage(msgTbl)
+            -- Only fade if still in stack and stack is still less than batch size
+            for i, m in ipairs(activeMessages) do
+                if m == myRef then
+                    myIndex = i
+                    break
+                end
+            end
+            if myIndex and #activeMessages < BATCH_SIZE and not myRef.faded then
+                fadeMessage(myRef)
             end
         end)
     elseif #activeMessages == BATCH_SIZE then
-        -- If we just reached a batch, start the batch fader
-        startBatchFader()
+        -- We just reached a batch, start batch fader
+        runBatchFader()
     end
 end
 
