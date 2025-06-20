@@ -3,19 +3,23 @@ local PET_TOOL_NAMES = {
 }
 
 local MESSAGE_TEXT = "You need a divine pet to make it work"
-local MESSAGE_HOLD_PET = "Hold your pet!"
-
--- UI APPEARANCE
-local MESSAGE_FONT = Enum.Font.ComicSans -- Playful, rounded font!
-local MESSAGE_SIZE = 26
+local MESSAGE_FONT = Enum.Font.ComicSans -- Playful, rounded font
+local MESSAGE_SIZE = 15
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
+local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark background
+local MESSAGE_BG_TRANS = 0.92 -- High transparency for a subtle look
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_STROKE_TRANS = 0.1 -- Slightly visible stroke
-local MESSAGE_FADE_TIME = 0.3
-local MESSAGE_LIFETIME = 1.3
+local MESSAGE_STROKE_TRANS = 0.1 -- Less transparent = more visible stroke
+local MESSAGE_FADE_TIME = 0.25
+local MESSAGE_LIFETIME = 3
+local BATCH_FADE_DELAY = 0.35
+local MSG_COOLDOWN = 0.13
+local STACK_MAX = 20
+local BATCH_SIZE = 5
 
--- MESSAGE Y OFFSET
 local MESSAGE_Y_START = 0.33
+local MESSAGE_Y_STEP = 0.035
+local MESSAGE_PADDING = 12 -- More padding for a softer look
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -25,9 +29,8 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
+local activeMessages = {} -- {frame, created, faded, claimed}
 local lastMsgTime = 0
-local MSG_COOLDOWN = 0.3
-local messageActive = false
 
 local function isPetTool(tool)
     if not tool or not tool.Name then return false end
@@ -40,26 +43,118 @@ local function isPetTool(tool)
     return false
 end
 
+local function restackMessages()
+    for i, msgTbl in ipairs(activeMessages) do
+        local msgFrame = msgTbl.frame
+        msgFrame.Position = UDim2.new(0.5, -125, MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP), 0)
+        msgFrame.Visible = true
+    end
+end
+
+local function fadeMessage(msgTbl)
+    if msgTbl.faded then return end
+    local msgFrame = msgTbl.frame
+    local msg = msgFrame:FindFirstChildOfClass("TextLabel")
+    game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
+    if msg then
+        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
+            TextTransparency = 1,
+            TextStrokeTransparency = 1
+        }):Play()
+    end
+    msgTbl.faded = true
+    task.wait(MESSAGE_FADE_TIME + 0.01)
+    msgFrame:Destroy()
+    for i, m in ipairs(activeMessages) do
+        if m == msgTbl then
+            table.remove(activeMessages, i)
+            break
+        end
+    end
+    restackMessages()
+end
+
+-- Start the forever batch fader coroutine exactly once!
+local batchFaderStarted = false
+local function startBatchFader()
+    if batchFaderStarted then return end
+    batchFaderStarted = true
+    task.spawn(function()
+        while true do
+            -- Only fade full batches
+            while #activeMessages >= BATCH_SIZE do
+                -- Only claim the first unclaimed batch
+                local batch = {}
+                for i = 1, BATCH_SIZE do
+                    local msg = activeMessages[i]
+                    batch[i] = msg
+                    msg.claimed = true
+                end
+                -- Wait for lifetime of oldest in batch
+                local oldest = batch[1]
+                local toWait = MESSAGE_LIFETIME - (tick() - oldest.created)
+                if toWait > 0 then task.wait(toWait) end
+                -- Fade whole batch at once
+                for _, msg in ipairs(batch) do
+                    fadeMessage(msg)
+                end
+                if #activeMessages >= BATCH_SIZE then
+                    task.wait(BATCH_FADE_DELAY)
+                end
+            end
+            -- No full batch available, check every 0.1s
+            task.wait(0.1)
+        end
+    end)
+end
+
 local function showMessage(text)
-    if messageActive then return end
+    if #activeMessages >= STACK_MAX then return end
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
-    messageActive = true
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(0, 250, 0, 17)
+    bg.Position = UDim2.new(0.5, -125, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
+    bg.BackgroundColor3 = MESSAGE_BG_COLOR
+    bg.BackgroundTransparency = 1 -- will fade in!
+    bg.BorderSizePixel = 0
+    bg.ZIndex = 100
+    bg.Parent = msgGui
+
+    -- Rounded corners
+    local uic = Instance.new("UICorner")
+    uic.CornerRadius = UDim.new(0, 22) -- Maximum roundness for pill shape
+    uic.Parent = bg
+
+    -- Subtle border
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(40,40,40)
+    stroke.Thickness = 1.5
+    stroke.Transparency = 0.2
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = bg
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, MESSAGE_PADDING)
+    pad.PaddingRight = UDim.new(0, MESSAGE_PADDING)
+    pad.Parent = bg
 
     local msg = Instance.new("TextLabel")
-    msg.Size = UDim2.new(1,0,0,40)
-    msg.Position = UDim2.new(0,0,MESSAGE_Y_START,0)
+    msg.Size = UDim2.new(1, 0, 1, 0)
     msg.BackgroundTransparency = 1
     msg.Text = text
     msg.Font = MESSAGE_FONT
     msg.TextSize = MESSAGE_SIZE
     msg.TextColor3 = MESSAGE_COLOR
-    msg.TextStrokeTransparency = MESSAGE_STROKE_TRANS -- Now: visible stroke!
+    msg.TextStrokeTransparency = MESSAGE_STROKE_TRANS
     msg.TextStrokeColor3 = MESSAGE_STROKE_COLOR
     msg.TextWrapped = true
-    msg.ZIndex = 100
-    msg.Parent = msgGui
+    msg.ZIndex = 101
+    msg.Parent = bg
 
+    -- Fade in
+    game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = MESSAGE_BG_TRANS}):Play()
     msg.TextTransparency = 1
     msg.TextStrokeTransparency = 1
     game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
@@ -67,96 +162,41 @@ local function showMessage(text)
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
 
-    task.delay(MESSAGE_LIFETIME, function()
-        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-            TextTransparency = 1,
-            TextStrokeTransparency = 1
-        }):Play()
-        task.wait(MESSAGE_FADE_TIME + 0.05)
-        msg:Destroy()
-        messageActive = false
+    local msgTbl = {frame = bg, created = tick(), faded = false, claimed = false}
+    table.insert(activeMessages, msgTbl)
+    restackMessages()
+
+    -- Always ensure batch fader is running
+    startBatchFader()
+
+    -- If not claimed by a batch after MESSAGE_LIFETIME, fade individually
+    task.spawn(function()
+        task.wait(MESSAGE_LIFETIME)
+        if not msgTbl.faded and not msgTbl.claimed then
+            fadeMessage(msgTbl)
+        end
     end)
 end
 
--- Utility: returns true if input is on a GUI button
-local function isOnGuiButton(pos)
-    for _,ui in ipairs(gui:GetDescendants()) do
-        if ui:IsA("GuiButton") and ui.Visible and ui.AbsoluteSize.Magnitude > 0 then
-            local abs = ui.AbsolutePosition
-            local size = ui.AbsoluteSize
-            if pos.X >= abs.X and pos.X <= abs.X+size.X and pos.Y >= abs.Y and pos.Y <= abs.Y+size.Y then
-                return true
-            end
-        end
-    end
-    return false
-end
-
--- Utility: returns true if input is on the mobile joystick (checks for common joystick UI)
-local function isOnJoystick(pos)
-    for _,ui in ipairs(gui:GetDescendants()) do
-        if (ui:IsA("ImageButton") or ui:IsA("Frame")) and ui.Visible and ui.AbsoluteSize.Magnitude > 0 then
-            local n = ui.Name:lower()
-            if n:find("joystick") or n:find("thumb") then
-                local abs = ui.AbsolutePosition
-                local size = ui.AbsoluteSize
-                if pos.X >= abs.X and pos.X <= abs.X+size.X and pos.Y >= abs.Y and pos.Y <= abs.Y+size.Y then
-                    return true
-                end
-            end
-        end
-    end
-    return false
-end
-
--- Main input handler
-local UserInputService = game:GetService("UserInputService")
-local mouse = player:GetMouse()
-
-local function handleInput(pos)
-    if isOnGuiButton(pos) then return end
-    if isOnJoystick(pos) then return end
-
+-- Main input handler: checks if holding a pet tool, otherwise shows message
+local function handlePetToolMessage()
     local char = player.Character
-    if not char then showMessage(MESSAGE_HOLD_PET) return end
+    if not char then
+        showMessage("Hold your pet!")
+        return
+    end
     local tool = char:FindFirstChildOfClass("Tool")
     if tool and isPetTool(tool) then
         showMessage(MESSAGE_TEXT)
     else
-        showMessage(MESSAGE_HOLD_PET)
+        showMessage("Hold your pet!")
     end
 end
 
--- Mouse (desktop)
-mouse.Button1Down:Connect(function()
-    local mousePos = UserInputService:GetMouseLocation()
-    handleInput(mousePos)
-end)
-
--- Touch (mobile)
-UserInputService.TouchTap:Connect(function(touchPositions, processed)
-    if not touchPositions or #touchPositions == 0 then return end
-    local touchPos = Vector2.new(touchPositions[1].X, touchPositions[1].Y)
-    handleInput(touchPos)
-end)
-
--- Tool.Activated (keyboard/console)
-local function connectTool(tool)
-    if tool:IsA("Tool") and isPetTool(tool) then
-        tool.Activated:Connect(function()
-            showMessage(MESSAGE_TEXT)
-        end)
-    end
-end
-
-if player.Character then
-    for _,tool in ipairs(player.Character:GetChildren()) do
-        connectTool(tool)
-    end
-end
-player.CharacterAdded:Connect(function(char)
-    char.ChildAdded:Connect(connectTool)
-end)
+-- Example input hook for testing:
+local UserInputService = game:GetService("UserInputService")
+local mouse = player:GetMouse()
+mouse.Button1Down:Connect(handlePetToolMessage)
 
 -- TEST BUTTON (for easy testing)
 do
@@ -174,17 +214,5 @@ do
     testBtn.AutoButtonColor = true
     local uic = Instance.new("UICorner", testBtn)
     uic.CornerRadius = UDim.new(0,12)
-    testBtn.MouseButton1Click:Connect(function()
-        local char = player.Character
-        if char then
-            local tool = char:FindFirstChildOfClass("Tool")
-            if tool and isPetTool(tool) then
-                showMessage(MESSAGE_TEXT)
-            else
-                showMessage(MESSAGE_HOLD_PET)
-            end
-        else
-            showMessage(MESSAGE_HOLD_PET)
-        end
-    end)
+    testBtn.MouseButton1Click:Connect(handlePetToolMessage)
 end
