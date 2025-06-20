@@ -9,7 +9,7 @@ local MESSAGE_TEXT = "You need have a original pet to dupe this pet spawner!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 20
+local MESSAGE_SIZE = 9
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_FADE_TIME = 0.3
@@ -17,7 +17,7 @@ local MESSAGE_LIFETIME = 1.3
 local SPAM_MAX = 7
 
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.032
+local MESSAGE_Y_STEP = 0.044
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
