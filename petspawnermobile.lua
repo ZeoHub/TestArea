@@ -1,5 +1,3 @@
--- Pet Spawner Premium — Mobile-Friendly Version (emoji labels, visible footer, floating visual handle, top-bar drag)
-
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
 
@@ -49,7 +47,7 @@ local gui = Create("ScreenGui", {
     ResetOnSpawn = false
 })
 
--- Main Panel (smaller for mobile)
+-- Main Panel
 local frame = Create("Frame", {
     Parent = gui,
     Size = UDim2.new(0, 280, 0, 180),
@@ -170,7 +168,7 @@ local closeBtn = Create("TextButton", {
 })
 closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- Input panel (smaller, repositioned)
+-- Input panel
 local panel = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(1, -18, 0, 100),
@@ -181,7 +179,7 @@ local panel = Create("Frame", {
 })
 Create("UICorner", {Parent=panel, CornerRadius=UDim.new(0, 8)})
 
--- Pet Icon Label ("🐾 Pets" with emoji above dropdown)
+-- Pet Icon Label
 local petLabelIcon = Create("ImageLabel", {
     Parent = panel,
     Size = UDim2.new(0,12,0,12),
@@ -228,7 +226,6 @@ local dropdownBtn = Create("TextButton", {
 })
 Create("UICorner", {Parent=dropdownBtn, CornerRadius=UDim.new(0,4)})
 
--- SCROLLING DROPDOWN MENU
 local maxVisiblePets = 5
 local dropdownHeight = maxVisiblePets * 16 + 2
 local dropdownFrameBorder = Create("Frame", {
@@ -336,7 +333,6 @@ Create("ImageLabel", {
     ZIndex = 10
 })
 
--- Age input & icon
 local petAgeBox = Create("TextBox", {
     Parent = panel,
     Size = UDim2.new(0.4, -18, 0, 15),
@@ -412,7 +408,6 @@ petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 
 -- === VISIBLE FOOTER ===
 local footerHeight = 28
-
 local footer = Instance.new("Frame")
 footer.Name = "Footer"
 footer.Parent = frame
@@ -426,18 +421,17 @@ footerCorner.CornerRadius = UDim.new(0, 14)
 
 -- === FLOATING VISUAL HANDLE ===
 local handleWidth, handleHeight = 64, 6
-local overlap = 3 -- amount to stick out below the panel
-
+local overlap = 3
 local dragHandle = Instance.new("Frame")
 dragHandle.Name = "DragHandle"
 dragHandle.Parent = frame
 dragHandle.Size = UDim2.new(0, handleWidth, 0, handleHeight)
 dragHandle.Position = UDim2.new(0.5, -handleWidth/2, 1, -math.floor(handleHeight/2) + overlap)
 dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
-dragHandle.BackgroundTransparency = 0 -- fully visible
+dragHandle.BackgroundTransparency = 0
 dragHandle.BorderSizePixel = 0
 dragHandle.ZIndex = 10
-dragHandle.Active = false -- not draggable
+dragHandle.Active = false
 local handleCorner = Instance.new("UICorner", dragHandle)
 handleCorner.CornerRadius = UDim.new(1, 3)
 
