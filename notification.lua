@@ -1,3 +1,5 @@
+-- Stacking pet tool popup with fade, high transparency, small font, and up to 20 stack
+
 local PET_TOOL_NAMES = {
     "dragonfly", "raccoon", "disco bee", "purple dragonfly", "butterfly", "queen bee"
 }
@@ -6,19 +8,18 @@ local MESSAGE_TEXT = "You can only place your pets in your garden!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 12
+local MESSAGE_SIZE = 5 -- Small font
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_BG_TRANS = 0.85
+local MESSAGE_BG_TRANS = 0.85 -- Even more transparent background
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
 local MESSAGE_LIFETIME = 1.2
-local MAX_VISIBLE_STACK = 5
 local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.035
+local MESSAGE_Y_STEP = 0.035 -- fine tune for spacing
 local MESSAGE_PADDING = 8
 local MSG_COOLDOWN = 0.13
 
@@ -48,26 +49,6 @@ local function restackMessages()
     for i, msgFrame in ipairs(activeMessages) do
         msgFrame.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP), 0)
     end
-end
-
-local function fadeAndRemoveMessage(msgFrame)
-    local msg = msgFrame:FindFirstChildOfClass("TextLabel")
-    game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
-    if msg then
-        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-            TextTransparency = 1,
-            TextStrokeTransparency = 1
-        }):Play()
-    end
-    task.wait(MESSAGE_FADE_TIME + 0.01)
-    msgFrame:Destroy()
-    for i, m in ipairs(activeMessages) do
-        if m == msgFrame then
-            table.remove(activeMessages, i)
-            break
-        end
-    end
-    restackMessages()
 end
 
 local function showMessage(text)
@@ -115,19 +96,25 @@ local function showMessage(text)
 
     table.insert(activeMessages, bg)
 
-    -- If stack exceeds max visible, fade out the bottom-most (oldest) message
-    if #activeMessages > MAX_VISIBLE_STACK then
-        local toFade = activeMessages[1]
-        task.spawn(function()
-            fadeAndRemoveMessage(toFade)
-        end)
-    end
-
-    -- Auto-fade after lifetime
     task.delay(MESSAGE_LIFETIME, function()
-        if bg.Parent then
-            fadeAndRemoveMessage(bg)
+        -- Fade out
+        local fadeTween1 = game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1})
+        local fadeTween2 = game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
+            TextTransparency = 1,
+            TextStrokeTransparency = 1
+        })
+        fadeTween1:Play()
+        fadeTween2:Play()
+        task.wait(MESSAGE_FADE_TIME + 0.01)
+        bg:Destroy()
+        -- Remove from stack and restack the rest
+        for i, m in ipairs(activeMessages) do
+            if m == bg then
+                table.remove(activeMessages, i)
+                break
+            end
         end
+        restackMessages()
     end)
 end
 
