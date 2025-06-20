@@ -1,3 +1,5 @@
+-- Pet Spawner Premium — Footer always visible, floating handle, whole panel draggable (mobile & desktop, smooth)
+
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
 
@@ -435,31 +437,33 @@ dragHandle.Active = false
 local handleCorner = Instance.new("UICorner", dragHandle)
 handleCorner.CornerRadius = UDim.new(1, 3)
 
--- === DRAG LOGIC (WHOLE PANEL & FOOTER, MOBILE AND DESKTOP) ===
+-- === DRAG LOGIC: WHOLE PANEL (MOBILE & DESKTOP), SMOOTH ===
 local dragging = false
 local dragStart, startPos
 
--- Mobile/desktop: drag from anywhere on the frame or the footer
-local function handleDrag(obj)
-    obj.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    obj.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
+local function onInputBegan(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
 end
 
-handleDrag(frame)
-handleDrag(footer)
+local function onInputChanged(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end
+
+local function onInputEnded(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end
+
+frame.InputBegan:Connect(onInputBegan)
+footer.InputBegan:Connect(onInputBegan)
+
+UIS.InputChanged:Connect(onInputChanged)
+UIS.InputEnded:Connect(onInputEnded)
