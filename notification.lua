@@ -1,7 +1,5 @@
--- Improved Pet Tool Hold Message Popup
--- - Only one message at a time, enforced cooldown
--- - No popups if tapping joystick or other UI buttons (desktop or mobile)
--- - 0.3s cooldown before another popup can show
+-- Improved message stack system: allows up to 7 stacked messages,
+-- 0.3s cooldown between new messages, block at max, new taps work as soon as a message fades.
 
 local PET_TOOL_NAMES = {
     "dragonfly", "raccoon", "disco bee", "purple dragonfly", "butterfly", "queen bee"
@@ -10,16 +8,16 @@ local PET_TOOL_NAMES = {
 local MESSAGE_TEXT = "You need have a original pet to dupe this pet spawner!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
--- UI APPEARANCE
 local MESSAGE_FONT = Enum.Font.GothamBold
 local MESSAGE_SIZE = 26
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_FADE_TIME = 0.3
 local MESSAGE_LIFETIME = 1.3
+local SPAM_MAX = 7
 
--- MESSAGE Y OFFSET
 local MESSAGE_Y_START = 0.33
+local MESSAGE_Y_STEP = 0.032
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -29,9 +27,9 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
+local activeMessages = {}
 local lastMsgTime = 0
 local MSG_COOLDOWN = 0.3
-local messageActive = false
 
 local function isPetTool(tool)
     if not tool or not tool.Name then return false end
@@ -45,10 +43,14 @@ local function isPetTool(tool)
 end
 
 local function showMessage(text)
-    if messageActive then return end
+    if #activeMessages >= SPAM_MAX then return end
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
-    messageActive = true
+
+    -- Move messages upward for stacking effect
+    for i, msg in ipairs(activeMessages) do
+        msg.Position = UDim2.new(0,0,MESSAGE_Y_START + ((i)*MESSAGE_Y_STEP),0)
+    end
 
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(1,0,0,40)
@@ -71,6 +73,8 @@ local function showMessage(text)
         TextStrokeTransparency = 0
     }):Play()
 
+    table.insert(activeMessages, msg)
+
     task.delay(MESSAGE_LIFETIME, function()
         game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
             TextTransparency = 1,
@@ -78,7 +82,17 @@ local function showMessage(text)
         }):Play()
         task.wait(MESSAGE_FADE_TIME + 0.05)
         msg:Destroy()
-        messageActive = false
+        -- Remove from stack and re-stack the rest
+        for i, m in ipairs(activeMessages) do
+            if m == msg then
+                table.remove(activeMessages, i)
+                break
+            end
+        end
+        -- Restack remaining messages
+        for i, m in ipairs(activeMessages) do
+            m.Position = UDim2.new(0,0,MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP),0)
+        end
     end)
 end
 
