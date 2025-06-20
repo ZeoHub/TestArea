@@ -25,7 +25,7 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
-local activeMessages = {} -- {frame=Frame, created=number, faded=false, batchMode=bool}
+local activeMessages = {} -- {frame=Frame, created=number, faded=false}
 local lastMsgTime = 0
 local batchFaderRunning = false
 
@@ -38,27 +38,26 @@ local function restackMessages()
 end
 
 local function fadeMessage(msgTbl)
-    if not msgTbl.faded then
-        local msgFrame = msgTbl.frame
-        local msg = msgFrame:FindFirstChildOfClass("TextLabel")
-        game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
-        if msg then
-            game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-                TextTransparency = 1,
-                TextStrokeTransparency = 1
-            }):Play()
-        end
-        msgTbl.faded = true
-        task.wait(MESSAGE_FADE_TIME + 0.01)
-        msgFrame:Destroy()
-        for i, m in ipairs(activeMessages) do
-            if m == msgTbl then
-                table.remove(activeMessages, i)
-                break
-            end
-        end
-        restackMessages()
+    if msgTbl.faded then return end
+    local msgFrame = msgTbl.frame
+    local msg = msgFrame:FindFirstChildOfClass("TextLabel")
+    game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
+    if msg then
+        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
+            TextTransparency = 1,
+            TextStrokeTransparency = 1
+        }):Play()
     end
+    msgTbl.faded = true
+    task.wait(MESSAGE_FADE_TIME + 0.01)
+    msgFrame:Destroy()
+    for i, m in ipairs(activeMessages) do
+        if m == msgTbl then
+            table.remove(activeMessages, i)
+            break
+        end
+    end
+    restackMessages()
 end
 
 local function fadeBatch(batch)
@@ -71,25 +70,19 @@ local function batchFader()
     if batchFaderRunning then return end
     batchFaderRunning = true
     task.spawn(function()
-        while true do
-            if #activeMessages < STACK_BATCH then break end
+        while #activeMessages >= STACK_BATCH do
+            -- Always operate on the oldest batch of 5!
+            local batch = {}
+            for i = 1, math.min(STACK_BATCH, #activeMessages) do
+                table.insert(batch, activeMessages[i])
+            end
             local now = tick()
-            local oldest = activeMessages[1]
-            local oldestCreated = oldest.created
-            local toWait = MESSAGE_LIFETIME - (now - oldestCreated)
+            local batchCreated = batch[1].created
+            local toWait = MESSAGE_LIFETIME - (now - batchCreated)
             if toWait > 0 then
                 task.wait(toWait)
             end
-            -- Fade the oldest batch
-            local batch = {}
-            for i = 1, math.min(STACK_BATCH, #activeMessages) do
-                if activeMessages[i].batchMode then
-                    table.insert(batch, activeMessages[i])
-                end
-            end
-            if #batch > 0 then
-                fadeBatch(batch)
-            end
+            fadeBatch(batch)
             if #activeMessages >= STACK_BATCH then
                 task.wait(BATCH_FADE_DELAY)
             end
@@ -102,8 +95,6 @@ local function showMessage(text)
     if #activeMessages >= STACK_MAX then return end
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
-
-    local isBatchMode = (#activeMessages + 1) >= STACK_BATCH
 
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 400, 0, 18)
@@ -141,14 +132,14 @@ local function showMessage(text)
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
 
-    local msgTbl = {frame = bg, created = tick(), faded = false, batchMode = isBatchMode}
+    local msgTbl = {frame = bg, created = tick(), faded = false}
     table.insert(activeMessages, msgTbl)
     restackMessages()
 
-    if isBatchMode then
+    if #activeMessages >= STACK_BATCH then
         batchFader()
     else
-        -- Not in batch mode: fade individually
+        -- Less than 5: fade individually
         task.spawn(function()
             task.wait(MESSAGE_LIFETIME)
             fadeMessage(msgTbl)
