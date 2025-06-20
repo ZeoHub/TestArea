@@ -3,13 +3,13 @@ local PET_TOOL_NAMES = {
 }
 
 local MESSAGE_TEXT = "You need a divine pet to make it work"
-local MESSAGE_FONT = Enum.Font.ComicSans -- Playful, rounded font
+local MESSAGE_FONT = Enum.Font.Gotham -- Gotham: clean, modern, rounded sans-serif
 local MESSAGE_SIZE = 15
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20) -- Subtle dark background
 local MESSAGE_BG_TRANS = 0.92 -- High transparency for a subtle look
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_STROKE_TRANS = 0.1 -- Less transparent = more visible stroke
+local MESSAGE_STROKE_TRANS = 0.1 -- Slightly visible stroke
 local MESSAGE_FADE_TIME = 0.25
 local MESSAGE_LIFETIME = 3
 local BATCH_FADE_DELAY = 0.35
@@ -210,7 +210,7 @@ do
     testBtn.Text = "Test Popup Message"
     testBtn.TextColor3 = Color3.fromRGB(255,255,255)
     testBtn.TextSize = 18
-    testBtn.Font = Enum.Font.ComicSans
+    testBtn.Font = Enum.Font.Gotham
     testBtn.AutoButtonColor = true
     local uic = Instance.new("UICorner", testBtn)
     uic.CornerRadius = UDim.new(0,12)
