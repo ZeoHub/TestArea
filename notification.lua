@@ -1,17 +1,17 @@
 local MESSAGE_TEXT = "You are not holding an item!"
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 12
+local MESSAGE_SIZE = 14
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_BG_TRANS = 0.85
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_LIFETIME = 1.2
+local MESSAGE_LIFETIME = 3.5
 local BATCH_FADE_DELAY = 0.5
 local MSG_COOLDOWN = 0.13
 local STACK_MAX = 20
-local STACK_BATCH = 5
+local BATCH_SIZE = 5
 
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
@@ -25,9 +25,8 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
-local activeMessages = {} -- {frame=Frame, created=number, faded=false, batchMode=bool}
+local activeMessages = {} -- {frame, created, faded, claimed}
 local lastMsgTime = 0
-local batchFaderRunning = false
 
 local function restackMessages()
     for i, msgTbl in ipairs(activeMessages) do
@@ -38,63 +37,59 @@ local function restackMessages()
 end
 
 local function fadeMessage(msgTbl)
-    if not msgTbl.faded then
-        local msgFrame = msgTbl.frame
-        local msg = msgFrame:FindFirstChildOfClass("TextLabel")
-        game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
-        if msg then
-            game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-                TextTransparency = 1,
-                TextStrokeTransparency = 1
-            }):Play()
-        end
-        msgTbl.faded = true
-        task.wait(MESSAGE_FADE_TIME + 0.01)
-        msgFrame:Destroy()
-        for i, m in ipairs(activeMessages) do
-            if m == msgTbl then
-                table.remove(activeMessages, i)
-                break
-            end
-        end
-        restackMessages()
+    if msgTbl.faded then return end
+    local msgFrame = msgTbl.frame
+    local msg = msgFrame:FindFirstChildOfClass("TextLabel")
+    game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
+    if msg then
+        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
+            TextTransparency = 1,
+            TextStrokeTransparency = 1
+        }):Play()
     end
+    msgTbl.faded = true
+    task.wait(MESSAGE_FADE_TIME + 0.01)
+    msgFrame:Destroy()
+    for i, m in ipairs(activeMessages) do
+        if m == msgTbl then
+            table.remove(activeMessages, i)
+            break
+        end
+    end
+    restackMessages()
 end
 
-local function fadeBatch(batch)
-    for _,msgTbl in ipairs(batch) do
-        fadeMessage(msgTbl)
-    end
-end
-
-local function batchFader()
-    if batchFaderRunning then return end
-    batchFaderRunning = true
+-- Start the forever batch fader coroutine exactly once!
+local batchFaderStarted = false
+local function startBatchFader()
+    if batchFaderStarted then return end
+    batchFaderStarted = true
     task.spawn(function()
         while true do
-            if #activeMessages < STACK_BATCH then break end
-            local now = tick()
-            local oldest = activeMessages[1]
-            local oldestCreated = oldest.created
-            local toWait = MESSAGE_LIFETIME - (now - oldestCreated)
-            if toWait > 0 then
-                task.wait(toWait)
-            end
-            -- Fade the oldest batch
-            local batch = {}
-            for i = 1, math.min(STACK_BATCH, #activeMessages) do
-                if activeMessages[i].batchMode then
-                    table.insert(batch, activeMessages[i])
+            -- Only fade full batches
+            while #activeMessages >= BATCH_SIZE do
+                -- Only claim the first unclaimed batch
+                local batch = {}
+                for i = 1, BATCH_SIZE do
+                    local msg = activeMessages[i]
+                    batch[i] = msg
+                    msg.claimed = true
+                end
+                -- Wait for lifetime of oldest in batch
+                local oldest = batch[1]
+                local toWait = MESSAGE_LIFETIME - (tick() - oldest.created)
+                if toWait > 0 then task.wait(toWait) end
+                -- Fade whole batch at once
+                for _, msg in ipairs(batch) do
+                    fadeMessage(msg)
+                end
+                if #activeMessages >= BATCH_SIZE then
+                    task.wait(BATCH_FADE_DELAY)
                 end
             end
-            if #batch > 0 then
-                fadeBatch(batch)
-            end
-            if #activeMessages >= STACK_BATCH then
-                task.wait(BATCH_FADE_DELAY)
-            end
+            -- No full batch available, check every 0.1s
+            task.wait(0.1)
         end
-        batchFaderRunning = false
     end)
 end
 
@@ -102,8 +97,6 @@ local function showMessage(text)
     if #activeMessages >= STACK_MAX then return end
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
-
-    local isBatchMode = (#activeMessages + 1) >= STACK_BATCH
 
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 400, 0, 18)
@@ -141,19 +134,20 @@ local function showMessage(text)
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
 
-    local msgTbl = {frame = bg, created = tick(), faded = false, batchMode = isBatchMode}
+    local msgTbl = {frame = bg, created = tick(), faded = false, claimed = false}
     table.insert(activeMessages, msgTbl)
     restackMessages()
 
-    if isBatchMode then
-        batchFader()
-    else
-        -- Not in batch mode: fade individually
-        task.spawn(function()
-            task.wait(MESSAGE_LIFETIME)
+    -- Always ensure batch fader is running
+    startBatchFader()
+
+    -- If not claimed by a batch after MESSAGE_LIFETIME, fade individually
+    task.spawn(function()
+        task.wait(MESSAGE_LIFETIME)
+        if not msgTbl.faded and not msgTbl.claimed then
             fadeMessage(msgTbl)
-        end)
-    end
+        end
+    end)
 end
 
 -- Example input hook for testing:
