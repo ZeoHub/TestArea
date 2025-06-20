@@ -867,7 +867,7 @@ Create("TextLabel", {
 })
 
 -- === DRAGGABLE BOTTOM BAR (Desktop & Mobile) ===
-local resizeBarHeight = 5
+local resizeBarHeight = -10
 local resizeBarHoverHeight = 10
 local resizeBar = Instance.new("TextButton")
 resizeBar.Name = "MoveBar"
