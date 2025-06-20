@@ -1,6 +1,5 @@
 -- Improved Pet Tool Hold Message Popup
--- - Moved message a bit higher
--- - Maximum 8 messages on stack
+-- - Only one message at a time, enforced cooldown
 -- - No popups if tapping joystick or other UI buttons
 -- - 0.3s cooldown before another popup can show
 
@@ -18,11 +17,9 @@ local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_FADE_TIME = 0.3
 local MESSAGE_LIFETIME = 1.3
-local SPAM_MAX = 8 -- message stack limit
 
--- MESSAGE Y OFFSET (higher up, smaller stack step)
+-- MESSAGE Y OFFSET
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.032
 
 -- Helper to check if tool is a configured pet tool
 local function isPetTool(tool)
@@ -45,21 +42,20 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
--- Prevent duplicate messages (cooldown)
+-- Message popup state
 local lastMsgTime = 0
-local MSG_COOLDOWN = 0.3 -- seconds
+local MSG_COOLDOWN = 0.3
+local messageActive = false
 
--- Message popup
-local activeMessages = {}
 local function showMessage(text)
-    -- Cooldown & spam limit
-    if #activeMessages >= SPAM_MAX then return end
+    if messageActive then return end -- Only show if not already active
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
+    messageActive = true
 
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(1,0,0,40)
-    msg.Position = UDim2.new(0,0,MESSAGE_Y_START + (#activeMessages*MESSAGE_Y_STEP),0)
+    msg.Position = UDim2.new(0,0,MESSAGE_Y_START,0)
     msg.BackgroundTransparency = 1
     msg.Text = text
     msg.Font = MESSAGE_FONT
@@ -70,16 +66,14 @@ local function showMessage(text)
     msg.TextWrapped = true
     msg.ZIndex = 100
     msg.Parent = msgGui
-    table.insert(activeMessages, msg)
 
-    -- Fade in
     msg.TextTransparency = 1
     msg.TextStrokeTransparency = 1
     game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
         TextTransparency = 0,
         TextStrokeTransparency = 0
     }):Play()
-    -- Fade out after a bit
+
     task.delay(MESSAGE_LIFETIME, function()
         game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
             TextTransparency = 1,
@@ -87,11 +81,11 @@ local function showMessage(text)
         }):Play()
         task.wait(MESSAGE_FADE_TIME + 0.05)
         msg:Destroy()
-        table.remove(activeMessages, 1)
+        messageActive = false -- Allow new message after fade out
     end)
 end
 
--- TEST BUTTON (still works for easy testing)
+-- TEST BUTTON (for easy testing)
 do
     local testBtn = Instance.new("TextButton")
     testBtn.Name = "TestPetMsgBtn"
@@ -139,7 +133,6 @@ local function isTouchOnGui(input)
     return false
 end
 
--- Utility: returns true if input is on the mobile joystick (checks for common joystick UI)
 local function isTouchOnJoystick(input)
     local pos = input.Position
     for _,ui in ipairs(gui:GetDescendants()) do
@@ -161,7 +154,6 @@ local UserInputService = game:GetService("UserInputService")
 local mouse = player:GetMouse()
 
 local function handleInput(input, processed)
-    -- Ignore if processed by GUI, or if tap is on a button or joystick
     if processed then return end
     if isTouchOnGui(input) then return end
     if isTouchOnJoystick(input) then return end
@@ -183,9 +175,7 @@ end)
 
 -- Touch (mobile)
 UserInputService.TouchTap:Connect(function(touchPositions, processed)
-    -- touchPositions is an array [{X,Y}]
     if not touchPositions or #touchPositions == 0 then return end
-    -- Simulate a UserInputObject for utility
     local fakeInput = {
         UserInputType = Enum.UserInputType.Touch,
         Position = Vector2.new(touchPositions[1].X, touchPositions[1].Y)
@@ -193,13 +183,11 @@ UserInputService.TouchTap:Connect(function(touchPositions, processed)
     handleInput(fakeInput, processed)
 end)
 
--- Also listen for Tool.Activated (covers keyboard/console)
+-- Tool.Activated (keyboard/console)
 local function connectTool(tool)
     if tool:IsA("Tool") and isPetTool(tool) then
         tool.Activated:Connect(function()
-            if tick() - lastMsgTime >= MSG_COOLDOWN then
-                showMessage(MESSAGE_TEXT)
-            end
+            showMessage(MESSAGE_TEXT)
         end)
     end
 end
