@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels)
+-- Pet Spawner Premium — Mobile/Desktop, emoji labels, floating drag handle, KEEP FOOTER!
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -49,10 +49,10 @@ local gui = Create("ScreenGui", {
     ResetOnSpawn = false
 })
 
--- Main Panel (smaller for mobile)
+-- Main Panel
 local frame = Create("Frame", {
     Parent = gui,
-    Size = UDim2.new(0, 280, 0, 160),
+    Size = UDim2.new(0, 280, 0, 180),
     Position = UDim2.new(0.5, -140, 0.5, -115),
     BackgroundColor3 = COLOR_BG,
     BorderColor3 = COLOR_BORDER,
@@ -196,7 +196,7 @@ Create("TextLabel", {
     Size = UDim2.new(0, 36, 0, 12),
     Position = UDim2.new(0, 18, 0, 2),
     BackgroundTransparency = 1,
-    Text = "🦝 Pets",    -- emoji added!
+    Text = "🦝 Pets",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -229,7 +229,6 @@ local dropdownBtn = Create("TextButton", {
 })
 Create("UICorner", {Parent=dropdownBtn, CornerRadius=UDim.new(0,4)})
 
--- SCROLLING DROPDOWN MENU
 local maxVisiblePets = 5
 local dropdownHeight = maxVisiblePets * 16 + 2
 local dropdownFrameBorder = Create("Frame", {
@@ -293,7 +292,7 @@ Create("TextLabel", {
     Size = UDim2.new(0.4, -6, 0, 10),
     Position = UDim2.new(0, 22, 0, 34),
     BackgroundTransparency = 1,
-    Text = "⚖️ KG",  -- emoji added!
+    Text = "⚖️ KG",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -304,7 +303,7 @@ Create("TextLabel", {
     Size = UDim2.new(0.4, -6, 0, 10),
     Position = UDim2.new(0.6, 0, 0, 34),
     BackgroundTransparency = 1,
-    Text = "⏰ Age", -- emoji added!
+    Text = "⏰ Age",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 10,
@@ -337,7 +336,6 @@ Create("ImageLabel", {
     ZIndex = 10
 })
 
--- Age input & icon
 local petAgeBox = Create("TextBox", {
     Parent = panel,
     Size = UDim2.new(0.4, -18, 0, 15),
@@ -411,7 +409,7 @@ end)
 petBtn.MouseEnter:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 
--- Centered footer (with rounded corners)
+-- Centered footer (with rounded corners, always visible)
 local footerFrame = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(1, 0, 0, 18),
@@ -432,34 +430,32 @@ Create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Center,
 })
 
--- === DRAGGABLE BOTTOM BAR (Desktop & Mobile) ===
-local resizeBarHeight = 5
-local resizeBarHoverHeight = 10
-local resizeBar = Instance.new("TextButton")
-resizeBar.Name = "MoveBar"
-resizeBar.Parent = frame
-resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHeight)
-resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHeight)
-resizeBar.BackgroundColor3 = COLOR_BORDER
-resizeBar.Text = ""
-resizeBar.AutoButtonColor = false
-resizeBar.BackgroundTransparency = 0.15
-resizeBar.BorderSizePixel = 0
-local resizeBarCorner = Instance.new("UICorner", resizeBar)
-resizeBarCorner.CornerRadius = UDim.new(1, 3)
+-- === FLOATING WHITE DRAG HANDLE + DRAGGABLE (Desktop & Mobile) ===
+local dragHandleHeight = 6
+local dragHandleOverlap = 3
+local dragHandle = Instance.new("TextButton")
+dragHandle.Name = "MoveBar"
+dragHandle.Parent = frame
+dragHandle.Size = UDim2.new(0.3, 0, 0, dragHandleHeight)
+dragHandle.Position = UDim2.new(0.5, -(0.3*frame.Size.X.Offset)/2, 1, -math.floor(dragHandleHeight/2) + dragHandleOverlap)
+dragHandle.AnchorPoint = Vector2.new(0, 0)
+dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
+dragHandle.Text = ""
+dragHandle.AutoButtonColor = true
+dragHandle.BackgroundTransparency = 0
+dragHandle.BorderSizePixel = 0
+dragHandle.ZIndex = 200
+local dragHandleCorner = Instance.new("UICorner", dragHandle)
+dragHandleCorner.CornerRadius = UDim.new(1, 3)
 
-resizeBar.MouseEnter:Connect(function()
-    resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHoverHeight)
-    resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHoverHeight)
-    resizeBar.BackgroundColor3 = COLOR_ACCENT
+dragHandle.MouseEnter:Connect(function()
+    dragHandle.BackgroundColor3 = Color3.fromRGB(200,200,200)
 end)
-resizeBar.MouseLeave:Connect(function()
-    resizeBar.Size = UDim2.new(1, 0, 0, resizeBarHeight)
-    resizeBar.Position = UDim2.new(0, 0, 1, -resizeBarHeight)
-    resizeBar.BackgroundColor3 = COLOR_BORDER
+dragHandle.MouseLeave:Connect(function()
+    dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
 end)
 
--- Universal dragging (desktop & mobile)
+-- Universal dragging (desktop & mobile; handle only)
 local draggingBar = false
 local dragBarStart, startBarPos
 
@@ -484,13 +480,13 @@ local function beginDrag(input)
     end)
 end
 
-resizeBar.InputBegan:Connect(function(input)
+dragHandle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         beginDrag(input)
     end
 end)
 
--- Drag to move (top bar, both desktop & mobile)
+-- (Optional) Also allow top bar dragging, if you want:
 local dragging, dragStart, startPos
 frame.InputBegan:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
