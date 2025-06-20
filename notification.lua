@@ -8,10 +8,10 @@ local MESSAGE_TEXT = "You can only place your pets in your garden!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 5 -- Small font
+local MESSAGE_SIZE = 10 -- Small font
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_BG_TRANS = 0.7 -- Very transparent
+local MESSAGE_BG_TRANS = 0.85 -- Even more transparent background
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
@@ -62,7 +62,7 @@ local function showMessage(text)
     bg.Size = UDim2.new(0, 400, 0, 18)
     bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((#activeMessages)*MESSAGE_Y_STEP), 0)
     bg.BackgroundColor3 = MESSAGE_BG_COLOR
-    bg.BackgroundTransparency = MESSAGE_BG_TRANS
+    bg.BackgroundTransparency = 1
     bg.BorderSizePixel = 0
     bg.ZIndex = 100
     bg.Parent = msgGui
@@ -86,10 +86,9 @@ local function showMessage(text)
     msg.Parent = bg
 
     -- Fade in
-    bg.BackgroundTransparency = 1
+    game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = MESSAGE_BG_TRANS}):Play()
     msg.TextTransparency = 1
     msg.TextStrokeTransparency = 1
-    game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = MESSAGE_BG_TRANS}):Play()
     game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
         TextTransparency = 0,
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
