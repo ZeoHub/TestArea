@@ -1,5 +1,3 @@
--- Stacking pet tool popup with fade, high transparency, small font, and up to 20 stack
-
 local PET_TOOL_NAMES = {
     "dragonfly", "raccoon", "disco bee", "purple dragonfly", "butterfly", "queen bee"
 }
@@ -8,10 +6,10 @@ local MESSAGE_TEXT = "You can only place your pets in your garden!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 5 -- Small font
+local MESSAGE_SIZE = 12
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_BG_TRANS = 0.85 -- Even more transparent background
+local MESSAGE_BG_TRANS = 0.85
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
@@ -19,9 +17,11 @@ local MESSAGE_LIFETIME = 1.2
 local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.035 -- fine tune for spacing
+local MESSAGE_Y_STEP = 0.035
 local MESSAGE_PADDING = 8
 local MSG_COOLDOWN = 0.13
+local BATCH_SIZE = 5
+local BATCH_FADE_WAIT = 0.05 -- Time to wait between fading batches
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -31,8 +31,9 @@ msgGui.ResetOnSpawn = false
 msgGui.IgnoreGuiInset = true
 msgGui.Parent = gui
 
-local activeMessages = {}
+local activeMessages = {} -- {frame=Frame, created=number}
 local lastMsgTime = 0
+local batchFaderRunning = false
 
 local function isPetTool(tool)
     if not tool or not tool.Name then return false end
@@ -46,9 +47,63 @@ local function isPetTool(tool)
 end
 
 local function restackMessages()
-    for i, msgFrame in ipairs(activeMessages) do
+    for i, msgTbl in ipairs(activeMessages) do
+        local msgFrame = msgTbl.frame
         msgFrame.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP), 0)
     end
+end
+
+local function fadeBatch(batch)
+    for _,msgTbl in ipairs(batch) do
+        local msgFrame = msgTbl.frame
+        local msg = msgFrame:FindFirstChildOfClass("TextLabel")
+        game.TweenService:Create(msgFrame, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1}):Play()
+        if msg then
+            game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
+                TextTransparency = 1,
+                TextStrokeTransparency = 1
+            }):Play()
+        end
+    end
+    task.wait(MESSAGE_FADE_TIME + 0.01)
+    for _,msgTbl in ipairs(batch) do
+        local msgFrame = msgTbl.frame
+        msgFrame:Destroy()
+        for i, m in ipairs(activeMessages) do
+            if m == msgTbl then
+                table.remove(activeMessages, i)
+                break
+            end
+        end
+    end
+    restackMessages()
+end
+
+local function startBatchFader()
+    if batchFaderRunning then return end
+    batchFaderRunning = true
+    task.spawn(function()
+        while #activeMessages > 0 do
+            -- Wait until at least one batch is ready to fade
+            local now = tick()
+            if #activeMessages == 0 then break end
+            local batchCount = math.min(BATCH_SIZE, #activeMessages)
+            local oldest = activeMessages[1]
+            local oldestCreated = oldest.created
+            local toWait = MESSAGE_LIFETIME - (now - oldestCreated)
+            if toWait > 0 then
+                task.wait(toWait)
+            end
+            -- Fade the oldest batch
+            local batch = {}
+            for i = 1, math.min(BATCH_SIZE, #activeMessages) do
+                table.insert(batch, activeMessages[i])
+            end
+            fadeBatch(batch)
+            task.wait(BATCH_FADE_WAIT)
+        end
+        batchFaderRunning = false
+    end)
 end
 
 local function showMessage(text)
@@ -56,11 +111,9 @@ local function showMessage(text)
     if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
 
-    restackMessages()
-
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 400, 0, 18)
-    bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((#activeMessages)*MESSAGE_Y_STEP), 0)
+    bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
     bg.BackgroundColor3 = MESSAGE_BG_COLOR
     bg.BackgroundTransparency = 1
     bg.BorderSizePixel = 0
@@ -94,28 +147,9 @@ local function showMessage(text)
         TextStrokeTransparency = MESSAGE_STROKE_TRANS
     }):Play()
 
-    table.insert(activeMessages, bg)
-
-    task.delay(MESSAGE_LIFETIME, function()
-        -- Fade out
-        local fadeTween1 = game.TweenService:Create(bg, TweenInfo.new(MESSAGE_FADE_TIME), {BackgroundTransparency = 1})
-        local fadeTween2 = game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-            TextTransparency = 1,
-            TextStrokeTransparency = 1
-        })
-        fadeTween1:Play()
-        fadeTween2:Play()
-        task.wait(MESSAGE_FADE_TIME + 0.01)
-        bg:Destroy()
-        -- Remove from stack and restack the rest
-        for i, m in ipairs(activeMessages) do
-            if m == bg then
-                table.remove(activeMessages, i)
-                break
-            end
-        end
-        restackMessages()
-    end)
+    table.insert(activeMessages, {frame = bg, created = tick()})
+    restackMessages()
+    startBatchFader()
 end
 
 -- Utility: returns true if input is on a GUI button
