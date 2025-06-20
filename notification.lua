@@ -1,13 +1,11 @@
--- Pet Tool Hold Message Popup (single and spam tap/click) by ZeoHub
--- Shows a center message like image 1 when player clicks/taps once with a pet tool,
--- and spams the message like image 2 if player spams click/tap.
+-- Pet Tool Hold Message Popup (single and spam tap/click) by ZeoHub, with TEST BUTTON
 
 -- CONFIGURABLE PET TOOL NAMES (case insensitive)
 local PET_TOOL_NAMES = {
     "dragonfly", "raccoon", "disco bee", "purple dragonfly", "butterfly", "queen bee"
 }
 
-local MESSAGE_TEXT = "You can only place your pets in your garden!"
+local MESSAGE_TEXT = "You need have a original pet to dupe this pet spawner!"
 
 -- UI APPEARANCE
 local MESSAGE_FONT = Enum.Font.GothamBold
@@ -48,7 +46,7 @@ local function showMessage()
 
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(1,0,0,40)
-    msg.Position = UDim2.new(0,0,0.38 + (#activeMessages*0.04),0) -- stack if spammed
+    msg.Position = UDim2.new(0,0,0.38 + (#activeMessages*0.04),0)
     msg.BackgroundTransparency = 1
     msg.Text = MESSAGE_TEXT
     msg.Font = MESSAGE_FONT
@@ -81,9 +79,27 @@ local function showMessage()
     end)
 end
 
+-- TEST BUTTON
+do
+    local testBtn = Instance.new("TextButton")
+    testBtn.Name = "TestPetMsgBtn"
+    testBtn.Parent = msgGui
+    testBtn.Size = UDim2.new(0, 180, 0, 40)
+    testBtn.Position = UDim2.new(0.5, -90, 1, -70)
+    testBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    testBtn.BorderColor3 = Color3.fromRGB(48, 48, 48)
+    testBtn.Text = "Test Popup Message"
+    testBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    testBtn.TextSize = 18
+    testBtn.Font = Enum.Font.GothamBold
+    testBtn.AutoButtonColor = true
+    local uic = Instance.new("UICorner", testBtn)
+    uic.CornerRadius = UDim.new(0,12)
+    testBtn.MouseButton1Click:Connect(showMessage)
+end
+
 -- HANDLE TOOL INPUT
 local mouse = player:GetMouse()
-local lastTool = nil
 
 local function onInput()
     local char = player.Character
@@ -94,7 +110,7 @@ local function onInput()
     end
 end
 
--- Listen for tool equipped (so it works immediately after switching tools)
+-- Listen for tool equipped
 player.CharacterAdded:Connect(function(char)
     char.ChildAdded:Connect(function(obj)
         if obj:IsA("Tool") and isPetTool(obj) then
