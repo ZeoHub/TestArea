@@ -1,23 +1,25 @@
--- Improved message stack system: allows up to 7 stacked messages,
--- 0.3s cooldown between new messages, block at max, new taps work as soon as a message fades.
+-- Message stack system: up to 20 stacked messages, small font, black background, no fade, 0.15s cooldown
 
 local PET_TOOL_NAMES = {
     "dragonfly", "raccoon", "disco bee", "purple dragonfly", "butterfly", "queen bee"
 }
 
-local MESSAGE_TEXT = "You need have a original pet to dupe this pet spawner!"
+local MESSAGE_TEXT = "You can only place your pets in your garden!"
 local MESSAGE_HOLD_PET = "Hold your pet!"
 
 local MESSAGE_FONT = Enum.Font.GothamBold
-local MESSAGE_SIZE = 5
+local MESSAGE_SIZE = 5 -- very small
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
+local MESSAGE_BG_COLOR = Color3.fromRGB(0,0,0)
+local MESSAGE_BG_TRANS = 0.45
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_FADE_TIME = 0.3
+local MESSAGE_STROKE_TRANS = 0.4
 local MESSAGE_LIFETIME = 1.3
-local SPAM_MAX = 10
+local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.060
+local MESSAGE_Y_STEP = 0.033 -- Small gap, adjust if you want more/less space
+local MESSAGE_PADDING = 8
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -29,7 +31,7 @@ msgGui.Parent = gui
 
 local activeMessages = {}
 local lastMsgTime = 0
-local MSG_COOLDOWN = 0.3
+local MSG_COOLDOWN = 0.15
 
 local function isPetTool(tool)
     if not tool or not tool.Name then return false end
@@ -49,49 +51,52 @@ local function showMessage(text)
 
     -- Move messages upward for stacking effect
     for i, msg in ipairs(activeMessages) do
-        msg.Position = UDim2.new(0,0,MESSAGE_Y_START + ((i)*MESSAGE_Y_STEP),0)
+        msg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + (i)*MESSAGE_Y_STEP, 0)
     end
 
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(0, 400, 0, 18)
+    bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START, 0)
+    bg.BackgroundColor3 = MESSAGE_BG_COLOR
+    bg.BackgroundTransparency = MESSAGE_BG_TRANS
+    bg.BorderSizePixel = 0
+    bg.ZIndex = 100
+    bg.Parent = msgGui
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, MESSAGE_PADDING)
+    pad.PaddingRight = UDim.new(0, MESSAGE_PADDING)
+    pad.PaddingTop = UDim.new(0, 0)
+    pad.PaddingBottom = UDim.new(0, 0)
+    pad.Parent = bg
+
     local msg = Instance.new("TextLabel")
-    msg.Size = UDim2.new(1,0,0,40)
-    msg.Position = UDim2.new(0,0,MESSAGE_Y_START,0)
+    msg.Size = UDim2.new(1, 0, 1, 0)
     msg.BackgroundTransparency = 1
     msg.Text = text
     msg.Font = MESSAGE_FONT
     msg.TextSize = MESSAGE_SIZE
     msg.TextColor3 = MESSAGE_COLOR
-    msg.TextStrokeTransparency = 0
+    msg.TextStrokeTransparency = MESSAGE_STROKE_TRANS
     msg.TextStrokeColor3 = MESSAGE_STROKE_COLOR
     msg.TextWrapped = true
-    msg.ZIndex = 100
-    msg.Parent = msgGui
+    msg.ZIndex = 101
+    msg.Parent = bg
 
-    msg.TextTransparency = 1
-    msg.TextStrokeTransparency = 1
-    game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-        TextTransparency = 0,
-        TextStrokeTransparency = 0
-    }):Play()
-
-    table.insert(activeMessages, msg)
+    table.insert(activeMessages, bg)
 
     task.delay(MESSAGE_LIFETIME, function()
-        game.TweenService:Create(msg, TweenInfo.new(MESSAGE_FADE_TIME), {
-            TextTransparency = 1,
-            TextStrokeTransparency = 1
-        }):Play()
-        task.wait(MESSAGE_FADE_TIME + 0.05)
-        msg:Destroy()
+        bg:Destroy()
         -- Remove from stack and re-stack the rest
         for i, m in ipairs(activeMessages) do
-            if m == msg then
+            if m == bg then
                 table.remove(activeMessages, i)
                 break
             end
         end
         -- Restack remaining messages
         for i, m in ipairs(activeMessages) do
-            m.Position = UDim2.new(0,0,MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP),0)
+            m.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + (i-1)*MESSAGE_Y_STEP, 0)
         end
     end)
 end
@@ -127,7 +132,6 @@ local function isOnJoystick(pos)
     return false
 end
 
--- Main input handler
 local UserInputService = game:GetService("UserInputService")
 local mouse = player:GetMouse()
 
@@ -145,20 +149,17 @@ local function handleInput(pos)
     end
 end
 
--- Mouse (desktop)
 mouse.Button1Down:Connect(function()
     local mousePos = UserInputService:GetMouseLocation()
     handleInput(mousePos)
 end)
 
--- Touch (mobile)
 UserInputService.TouchTap:Connect(function(touchPositions, processed)
     if not touchPositions or #touchPositions == 0 then return end
     local touchPos = Vector2.new(touchPositions[1].X, touchPositions[1].Y)
     handleInput(touchPos)
 end)
 
--- Tool.Activated (keyboard/console)
 local function connectTool(tool)
     if tool:IsA("Tool") and isPetTool(tool) then
         tool.Activated:Connect(function()
