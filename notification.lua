@@ -31,7 +31,7 @@ local lastMsgTime = 0
 local function restackMessages()
     for i, msgTbl in ipairs(activeMessages) do
         local msgFrame = msgTbl.frame
-        msgFrame.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP), 0)
+        msgFrame.Position = UDim2.new(0.5, -125, MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP), 0)
         msgFrame.Visible = true
     end
 end
@@ -100,7 +100,7 @@ local function showMessage(text)
 
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 250, 0, 17)
-    bg.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
+    bg.Position = UDim2.new(0.5, -125, MESSAGE_Y_START + (#activeMessages)*MESSAGE_Y_STEP, 0)
     bg.BackgroundColor3 = MESSAGE_BG_COLOR
     bg.BackgroundTransparency = 1 -- will fade in!
     bg.BorderSizePixel = 0
