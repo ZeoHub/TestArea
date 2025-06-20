@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels)
+e-- Pet Spawner Premium — Mobile-Friendly Version (with emoji labels)
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -290,7 +290,7 @@ end)
 Create("TextLabel", {
     Parent = panel,
     Size = UDim2.new(0.4, -6, 0, 10),
-    Position = UDim2.new(0, 22, 0, 34),
+    Position = UDim2.new(0, 16, 0, 34),
     BackgroundTransparency = 1,
     Text = "⚖️ KG",  -- emoji added!
     TextColor3 = COLOR_TEXT,
@@ -301,7 +301,7 @@ Create("TextLabel", {
 Create("TextLabel", {
     Parent = panel,
     Size = UDim2.new(0.4, -6, 0, 10),
-    Position = UDim2.new(0.6, 0, 0, 34),
+    Position = UDim2.new(0.6, -8, 0, 34),
     BackgroundTransparency = 1,
     Text = "⏰ Age", -- emoji added!
     TextColor3 = COLOR_TEXT,
