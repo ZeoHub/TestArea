@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile/Desktop, emoji labels, floating drag handle, KEEP FOOTER!
+-- Pet Spawner Premium — Mobile/Desktop, emoji labels, footer always visible, floating drag handle, pets spawn WORKS
 
 local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
@@ -53,7 +53,7 @@ local gui = Create("ScreenGui", {
 local frame = Create("Frame", {
     Parent = gui,
     Size = UDim2.new(0, 280, 0, 180),
-    Position = UDim2.new(0.5, -140, 0.5, -115),
+    Position = UDim2.new(0.5, -140, 0.5, -90),
     BackgroundColor3 = COLOR_BG,
     BorderColor3 = COLOR_BORDER,
     BorderSizePixel = 1,
@@ -400,6 +400,7 @@ petBtn.MouseButton1Click:Connect(function()
     local pet = selectedPet or pets[1]
     local kg = tonumber(petKgBox.Text) or 1
     local age = tonumber(petAgeBox.Text) or 1
+    print("SpawnPet clicked", pet, kg, age, Spawner, Spawner and Spawner.SpawnPet)
     if Spawner and Spawner.SpawnPet then
         Spawner.SpawnPet(pet, kg, age)
     else
@@ -412,22 +413,24 @@ petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
 -- Centered footer (with rounded corners, always visible)
 local footerFrame = Create("Frame", {
     Parent = frame,
-    Size = UDim2.new(1, 0, 0, 18),
-    Position = UDim2.new(0,0,1,-18),
+    Size = UDim2.new(1, 0, 0, 22),
+    Position = UDim2.new(0,0,1,-22),
     BackgroundColor3 = COLOR_PANEL,
-    BorderSizePixel = 0
+    BorderSizePixel = 0,
+    ZIndex = 50
 })
 Create("UICorner", {Parent=footerFrame, CornerRadius=UDim.new(0, 8)})
 Create("TextLabel", {
     Parent = footerFrame,
-    Size = UDim2.new(1, 0, 0, 18),
+    Size = UDim2.new(1, 0, 0, 22),
     Position = UDim2.new(0, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "Grow A Garden • 1.25.10.8 • @deeznuts",
     TextColor3 = COLOR_TEXT,
     Font = FONT_MAIN,
-    TextSize = 9,
+    TextSize = 10,
     TextXAlignment = Enum.TextXAlignment.Center,
+    ZIndex = 51
 })
 
 -- === FLOATING WHITE DRAG HANDLE + DRAGGABLE (Desktop & Mobile) ===
@@ -437,7 +440,7 @@ local dragHandle = Instance.new("TextButton")
 dragHandle.Name = "MoveBar"
 dragHandle.Parent = frame
 dragHandle.Size = UDim2.new(0.3, 0, 0, dragHandleHeight)
-dragHandle.Position = UDim2.new(0.5, -(0.3*frame.Size.X.Offset)/2, 1, -math.floor(dragHandleHeight/2) + dragHandleOverlap)
+dragHandle.Position = UDim2.new(0.5, -(0.3*frame.Size.X.Offset)/2, 1, dragHandleOverlap)
 dragHandle.AnchorPoint = Vector2.new(0, 0)
 dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
 dragHandle.Text = ""
