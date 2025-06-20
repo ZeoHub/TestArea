@@ -19,7 +19,7 @@ local MESSAGE_LIFETIME = 1.2
 local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
-local MESSAGE_Y_STEP = 0.06 -- fine tune for spacing
+local MESSAGE_Y_STEP = 0.04 -- fine tune for spacing
 local MESSAGE_PADDING = 8
 local MSG_COOLDOWN = 0.13
 
