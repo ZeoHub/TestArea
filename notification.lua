@@ -3,16 +3,16 @@ local PET_TOOL_NAMES = {
 }
 
 local MESSAGE_TEXT = "You need a divine pet to make it work"
-local MESSAGE_FONT = Enum.Font.Gotham -- Gotham for modern/pro look
-local MESSAGE_SIZE = 15
+local MESSAGE_FONT = Enum.Font.GothamBold
+local MESSAGE_SIZE = 14
 local MESSAGE_COLOR = Color3.fromRGB(255,255,255)
 local MESSAGE_BG_COLOR = Color3.fromRGB(18,18,20)
 local MESSAGE_BG_TRANS = 0.92
 local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
-local MESSAGE_STROKE_TRANS = 0.1
+local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
-local MESSAGE_LIFETIME = 3
-local BATCH_FADE_DELAY = 0.35
+local MESSAGE_LIFETIME = 3.5
+local BATCH_FADE_DELAY = 0.5
 local MSG_COOLDOWN = 0.13
 local STACK_MAX = 20
 local BATCH_SIZE = 5
@@ -120,13 +120,6 @@ local function showMessage(text)
     uic.CornerRadius = UDim.new(0, 22)
     uic.Parent = bg
 
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(40,40,40)
-    stroke.Thickness = 1.5
-    stroke.Transparency = 0.2
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = bg
-
     local pad = Instance.new("UIPadding")
     pad.PaddingLeft = UDim.new(0, MESSAGE_PADDING)
     pad.PaddingRight = UDim.new(0, MESSAGE_PADDING)
@@ -165,25 +158,20 @@ local function showMessage(text)
     end)
 end
 
--- Main input handler: checks if holding a pet tool, otherwise shows message
-local function handlePetToolMessage()
+-- Tool check input hook (like version 1)
+local UserInputService = game:GetService("UserInputService")
+local mouse = player:GetMouse()
+mouse.Button1Down:Connect(function()
     local char = player.Character
-    if not char then
-        showMessage("Hold your pet!")
-        return
-    end
-    local tool = char:FindFirstChildOfClass("Tool")
+    local tool = char and char:FindFirstChildOfClass("Tool")
     if tool and isPetTool(tool) then
         showMessage(MESSAGE_TEXT)
     else
         showMessage("Hold your pet!")
     end
-end
+end)
 
-local UserInputService = game:GetService("UserInputService")
-local mouse = player:GetMouse()
-mouse.Button1Down:Connect(handlePetToolMessage)
-
+-- TEST BUTTON (for easy testing)
 do
     local testBtn = Instance.new("TextButton")
     testBtn.Name = "TestPetMsgBtn"
@@ -195,9 +183,17 @@ do
     testBtn.Text = "Test Popup Message"
     testBtn.TextColor3 = Color3.fromRGB(255,255,255)
     testBtn.TextSize = 18
-    testBtn.Font = Enum.Font.Gotham
+    testBtn.Font = Enum.Font.GothamBold
     testBtn.AutoButtonColor = true
     local uic = Instance.new("UICorner", testBtn)
     uic.CornerRadius = UDim.new(0,12)
-    testBtn.MouseButton1Click:Connect(handlePetToolMessage)
+    testBtn.MouseButton1Click:Connect(function()
+        local char = player.Character
+        local tool = char and char:FindFirstChildOfClass("Tool")
+        if tool and isPetTool(tool) then
+            showMessage(MESSAGE_TEXT)
+        else
+            showMessage("Hold your pet!")
+        end
+    end)
 end
