@@ -14,14 +14,13 @@ local MESSAGE_STROKE_COLOR = Color3.fromRGB(0,0,0)
 local MESSAGE_STROKE_TRANS = 0.5
 local MESSAGE_FADE_TIME = 0.25
 local MESSAGE_LIFETIME = 1.2
-local MSG_ADD_COOLDOWN = 0.13
-
-local MAX_VISIBLE_STACK = 20
+local MAX_VISIBLE_STACK = 5
 local SPAM_MAX = 20
 
 local MESSAGE_Y_START = 0.33
 local MESSAGE_Y_STEP = 0.035
 local MESSAGE_PADDING = 8
+local MSG_COOLDOWN = 0.13
 
 local player = game.Players.LocalPlayer
 local gui = player:FindFirstChildOfClass("PlayerGui")
@@ -48,7 +47,6 @@ end
 local function restackMessages()
     for i, msgFrame in ipairs(activeMessages) do
         msgFrame.Position = UDim2.new(0.5, -200, MESSAGE_Y_START + ((i-1)*MESSAGE_Y_STEP), 0)
-        msgFrame.Visible = i > #activeMessages - MAX_VISIBLE_STACK
     end
 end
 
@@ -74,8 +72,10 @@ end
 
 local function showMessage(text)
     if #activeMessages >= SPAM_MAX then return end
-    if tick() - lastMsgTime < MSG_ADD_COOLDOWN then return end
+    if tick() - lastMsgTime < MSG_COOLDOWN then return end
     lastMsgTime = tick()
+
+    restackMessages()
 
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0, 400, 0, 18)
@@ -114,12 +114,20 @@ local function showMessage(text)
     }):Play()
 
     table.insert(activeMessages, bg)
-    restackMessages()
 
-    -- Each message fades after its own lifetime
-    task.spawn(function()
-        task.wait(MESSAGE_LIFETIME)
-        fadeAndRemoveMessage(bg)
+    -- If stack exceeds max visible, fade out the bottom-most (oldest) message
+    if #activeMessages > MAX_VISIBLE_STACK then
+        local toFade = activeMessages[1]
+        task.spawn(function()
+            fadeAndRemoveMessage(toFade)
+        end)
+    end
+
+    -- Auto-fade after lifetime
+    task.delay(MESSAGE_LIFETIME, function()
+        if bg.Parent then
+            fadeAndRemoveMessage(bg)
+        end
     end)
 end
 
