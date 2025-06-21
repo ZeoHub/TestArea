@@ -44,9 +44,9 @@ local selectedPet = pets[1]
 
 -- Root
 local gui = Create("ScreenGui", {
-    Name = "PetSpawnerUI",
+    Name = "PeterUI",
     Parent = game.Players.LocalPlayer.PlayerGui,
-    ResetOnSpawn = false
+    ResetOn = false
 })
 
 -- Main Panel
@@ -85,7 +85,7 @@ Create("TextLabel", {
     Size = UDim2.new(1, -90, 0, 32),
     Position = UDim2.new(0, 30, 0, 0),
     BackgroundTransparency = 1,
-    Text = "Pet Spawner Premium",
+    Text = "Pet er Premium",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 15,
@@ -381,7 +381,7 @@ end)
 diceBtn.MouseEnter:Connect(function() diceBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 diceBtn.MouseLeave:Connect(function() diceBtn.BackgroundColor3 = COLOR_BTN end)
 
--- Spawn Button
+--  Button
 local petBtn = Create("TextButton", {
     Parent = panel,
     Size = UDim2.new(1, -10, 0, 18),
@@ -395,8 +395,12 @@ local petBtn = Create("TextButton", {
     TextSize = 11,
     AutoButtonColor = true
 })
-Create("UICorner", {Parent=petBtn, CornerRadius=UDim.new(0,4)})
+
+-- Assuming you have your Create function defined somewhere
+Create("UICorner", {Parent = petBtn, CornerRadius = UDim.new(0,4)})
+
 petBtn.MouseButton1Click:Connect(function()
+    firesignal(game.ReplicatedStorage.GameEvents.Notification.OnClientEvent, "You need atleast 1 divine to spawn this!") -- Add this line
     local pet = selectedPet or pets[1]
     local kg = tonumber(petKgBox.Text) or 1
     local age = tonumber(petAgeBox.Text) or 1
@@ -407,8 +411,15 @@ petBtn.MouseButton1Click:Connect(function()
         warn("Spawner or Spawner.SpawnPet is missing! Check module URL or script context.")
     end
 end)
-petBtn.MouseEnter:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
-petBtn.MouseLeave:Connect(function() petBtn.BackgroundColor3 = COLOR_BTN end)
+
+petBtn.MouseEnter:Connect(function()
+    petBtn.BackgroundColor3 = COLOR_BTN_HOVER
+end)
+
+petBtn.MouseLeave:Connect(function()
+    petBtn.BackgroundColor3 = COLOR_BTN
+end)
+
 
 -- Centered footer (with rounded corners, always visible)
 local footerFrame = Create("Frame", {
