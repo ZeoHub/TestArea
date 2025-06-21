@@ -1,6 +1,25 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ZeoHub/GrowAGardenV3/refs/heads/main/Nothing/Pet%20Placer.lua"))()
-local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua"))()
-pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
+
+local function SafeRequire(url)
+    local ok, result = pcall(function()
+        local src = game:HttpGet(url)
+        return loadstring(src)()
+    end)
+    if not ok then
+        warn("Failed to load script from "..url..": "..tostring(result))
+        return nil
+    end
+    return result
+end
+
+-- Load external scripts safely
+local PetPlacer = SafeRequire("https://raw.githubusercontent.com/ZeoHub/GrowAGardenV3/refs/heads/main/Nothing/Pet%20Placer.lua")
+wait(0.5)
+local Spawner = SafeRequire("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua")
+
+-- Destroy old UI if it exists
+pcall(function()
+    game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy()
+end)
 
 local function Create(class, props)
     local inst = Instance.new(class)
