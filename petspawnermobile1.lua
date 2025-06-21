@@ -87,7 +87,7 @@ Create("TextLabel", {
     Size = UDim2.new(1, -90, 0, 32),
     Position = UDim2.new(0, 30, 0, 0),
     BackgroundTransparency = 1,
-    Text = "Pet er Premium",
+    Text = "Pet Spawner Premium",
     TextColor3 = COLOR_TEXT,
     Font = FONT_BOLD,
     TextSize = 15,
