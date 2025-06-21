@@ -1,6 +1,6 @@
 -- Pet Spawner Premium — Mobile/Desktop, emoji labels, footer always visible, floating drag handle, pets spawn WORKS
 
-local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
+local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
 
 local function Create(class, props)
