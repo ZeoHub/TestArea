@@ -46,7 +46,7 @@ local selectedPet = pets[1]
 local gui = Create("ScreenGui", {
     Name = "PeterUI",
     Parent = game.Players.LocalPlayer.PlayerGui,
-    ResetOn = false
+    ResetOnSpawn = false
 })
 
 -- Main Panel
@@ -381,7 +381,7 @@ end)
 diceBtn.MouseEnter:Connect(function() diceBtn.BackgroundColor3 = COLOR_BTN_HOVER end)
 diceBtn.MouseLeave:Connect(function() diceBtn.BackgroundColor3 = COLOR_BTN end)
 
---  Button
+-- Pet Button
 local petBtn = Create("TextButton", {
     Parent = panel,
     Size = UDim2.new(1, -10, 0, 18),
@@ -396,16 +396,9 @@ local petBtn = Create("TextButton", {
     AutoButtonColor = true
 })
 
--- Assuming you have your Create function defined somewhere
--- Add rounded corners
-local corner = Instance.new("UICorner")
-corner.Parent = petBtn
-corner.CornerRadius = UDim.new(0, 4)
-
--- Button hover effects (define your colors somewhere)
-local COLOR_BTN = Color3.fromRGB(41,41,55)
-local COLOR_BTN_HOVER = Color3.fromRGB(60,60,80)
-petBtn.BackgroundColor3 = COLOR_BTN
+local petBtnCorner = Instance.new("UICorner")
+petBtnCorner.Parent = petBtn
+petBtnCorner.CornerRadius = UDim.new(0, 4)
 
 petBtn.MouseEnter:Connect(function()
     petBtn.BackgroundColor3 = COLOR_BTN_HOVER
@@ -414,23 +407,32 @@ petBtn.MouseLeave:Connect(function()
     petBtn.BackgroundColor3 = COLOR_BTN
 end)
 
--- Notification and spawn logic
+-- Spawn pet button handler
 petBtn.MouseButton1Click:Connect(function()
-    -- Show notification
-    firesignal(game.ReplicatedStorage.GameEvents.Notification.OnClientEvent, "You need atleast 1 divine to spawn this!")
-    
-    -- Pet spawning logic (example, adapt as needed)
+    firesignal(game.ReplicatedStorage.GameEvents.Notification.OnClientEvent, "You need atleast 1 divine to spawn this into your garden!")
     local pet = selectedPet or (pets and pets[1])
     local kg = tonumber(petKgBox and petKgBox.Text) or 1
     local age = tonumber(petAgeBox and petAgeBox.Text) or 1
     print("SpawnPet clicked", pet, kg, age, Spawner, Spawner and Spawner.SpawnPet)
-    if Spawner and Spawner.SpawnPet then
-        Spawner.SpawnPet(pet, kg, age)
-    else
-        warn("Spawner or Spawner.SpawnPet is missing! Check module URL or script context.")
-    end
-end)
 
+    -- Try calling as a function (for modules that are just a function)
+    if typeof(Spawner) == "function" then
+        local ok, err = pcall(Spawner, pet, kg, age)
+        if not ok then
+            warn("Spawner function call failed:", err)
+        end
+        return
+    end
+    -- Try calling as a table function (for modules that return a table)
+    if typeof(Spawner) == "table" and typeof(Spawner.SpawnPet) == "function" then
+        local ok, err = pcall(Spawner.SpawnPet, pet, kg, age)
+        if not ok then
+            warn("Spawner.SpawnPet failed:", err)
+        end
+        return
+    end
+    warn("Spawner module is invalid! Check module URL or script context.")
+end)
 
 -- Centered footer (with rounded corners, always visible)
 local footerFrame = Create("Frame", {
