@@ -397,27 +397,38 @@ local petBtn = Create("TextButton", {
 })
 
 -- Assuming you have your Create function defined somewhere
-Create("UICorner", {Parent = petBtn, CornerRadius = UDim.new(0,4)})
+-- Add rounded corners
+local corner = Instance.new("UICorner")
+corner.Parent = petBtn
+corner.CornerRadius = UDim.new(0, 4)
 
+-- Button hover effects (define your colors somewhere)
+local COLOR_BTN = Color3.fromRGB(41,41,55)
+local COLOR_BTN_HOVER = Color3.fromRGB(60,60,80)
+petBtn.BackgroundColor3 = COLOR_BTN
+
+petBtn.MouseEnter:Connect(function()
+    petBtn.BackgroundColor3 = COLOR_BTN_HOVER
+end)
+petBtn.MouseLeave:Connect(function()
+    petBtn.BackgroundColor3 = COLOR_BTN
+end)
+
+-- Notification and spawn logic
 petBtn.MouseButton1Click:Connect(function()
-    firesignal(game.ReplicatedStorage.GameEvents.Notification.OnClientEvent, "You need atleast 1 divine to spawn this!") -- Add this line
-    local pet = selectedPet or pets[1]
-    local kg = tonumber(petKgBox.Text) or 1
-    local age = tonumber(petAgeBox.Text) or 1
+    -- Show notification
+    firesignal(game.ReplicatedStorage.GameEvents.Notification.OnClientEvent, "You need atleast 1 divine to spawn this!")
+    
+    -- Pet spawning logic (example, adapt as needed)
+    local pet = selectedPet or (pets and pets[1])
+    local kg = tonumber(petKgBox and petKgBox.Text) or 1
+    local age = tonumber(petAgeBox and petAgeBox.Text) or 1
     print("SpawnPet clicked", pet, kg, age, Spawner, Spawner and Spawner.SpawnPet)
     if Spawner and Spawner.SpawnPet then
         Spawner.SpawnPet(pet, kg, age)
     else
         warn("Spawner or Spawner.SpawnPet is missing! Check module URL or script context.")
     end
-end)
-
-petBtn.MouseEnter:Connect(function()
-    petBtn.BackgroundColor3 = COLOR_BTN_HOVER
-end)
-
-petBtn.MouseLeave:Connect(function()
-    petBtn.BackgroundColor3 = COLOR_BTN
 end)
 
 
