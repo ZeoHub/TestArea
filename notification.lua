@@ -10,13 +10,14 @@ local function SafeRequire(url)
     return result
 end
 
--- Load Pet Placer safely
 local PetPlacer = SafeRequire("https://raw.githubusercontent.com/ZeoHub/GrowAGardenV3/refs/heads/main/Nothing/Pet%20Placer.lua")
+print("PetPlacer:", PetPlacer)
 
--- Load Spawner safely and call Load if available
 local Spawner = SafeRequire("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua")
+print("Spawner:", Spawner)
 if Spawner and typeof(Spawner.Load) == "function" then
+    print("Calling Spawner.Load()")
     Spawner.Load()
+else
+    warn("Spawner did not load or is missing the Load function!")
 end
-
--- fick
