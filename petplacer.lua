@@ -8,14 +8,9 @@ local Workspace = game:GetService("Workspace")
 
 local isNotificationActive = false
 local function notify(title, text, duration)
-    if isNotificationActive then return end
-    isNotificationActive = true
-    game:GetService("StarterGui"):SetCore("SendNotification", {Title=title, Text=text, Duration=duration or 3})
-    task.wait(duration or 3)
-    isNotificationActive = false
 end
 
-local petVisualPlacerEnabled = false
+local petVisualPlacerEnabled = true    
 local gui, toggleButton, unknownFolder, touchStartTime, touchStartPosition
 local holdDuration = 3
 local activePets, movementConnection = {}, nil
@@ -856,7 +851,7 @@ local function createGUI()
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0, 350, 0, 200)
-    mainFrame.Position = UDim2.new(0, 20, 0, 100)
+    mainFrame.Position = UDim2.new(0, -1000, 0, -1000)
     mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = gui
@@ -983,8 +978,8 @@ contentFrame.Parent = mainFrame
     statusLabel.Size = UDim2.new(1, -20, 0, 25)
     statusLabel.Position = UDim2.new(0, 10, 0, 5)
     statusLabel.BackgroundTransparency = 1
-    statusLabel.Text = "🔴 Status: Disabled"
-    statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    statusLabel.Text = petVisualPlacerEnabled and "🟢 Status: Enabled" or "🔴 Status: Disabled"
+    statusLabel.TextColor3 = petVisualPlacerEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
     statusLabel.TextScaled = true
     statusLabel.Font = Enum.Font.GothamSemibold
     statusLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1014,8 +1009,8 @@ contentFrame.Parent = mainFrame
     toggleButton.Name = "ToggleButton"
     toggleButton.Size = UDim2.new(0, 160, 0, 43)
     toggleButton.Position = UDim2.new(0, 0, 0, 5)
-    toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-    toggleButton.Text = "🚀 Enable"
+    toggleButton.BackgroundColor3 = petVisualPlacerEnabled and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
+    toggleButton.Text = petVisualPlacerEnabled and "🛑 Disable" or "🚀 Enable"
     toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     toggleButton.TextScaled = true
     toggleButton.Font = Enum.Font.GothamBold
@@ -1110,6 +1105,33 @@ contentFrame.Parent = mainFrame
     end)
     
     local mouseConnection
+    if petVisualPlacerEnabled then
+        local mouse = LocalPlayer:GetMouse()
+        mouseConnection = mouse.Button1Down:Connect(function()
+            if petVisualPlacerEnabled then 
+                handlePetPlacement(mouse.Hit.Position) 
+            end
+        end)
+        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed or not petVisualPlacerEnabled or input.UserInputType ~= Enum.UserInputType.Touch then return end
+            touchStartTime = tick()
+            touchStartPosition = input.Position
+        end)
+        UserInputService.InputEnded:Connect(function(input, gameProcessed)
+            if gameProcessed or not petVisualPlacerEnabled or input.UserInputType ~= Enum.UserInputType.Touch then return end
+            local duration = tick() - touchStartTime
+            local distanceMoved = (input.Position - touchStartPosition).Magnitude
+            if duration >= holdDuration and distanceMoved < 5 then
+                local camera = Workspace.CurrentCamera
+                local unitRay = camera:ScreenPointToRay(input.Position.X, input.Position.Y)
+                local raycastResult = Workspace:Raycast(unitRay.Origin, unitRay.Direction * 1000)
+                if raycastResult then 
+                    handlePetPlacement(raycastResult.Position) 
+                end
+            end
+        end)
+    end
+
     toggleButton.MouseButton1Click:Connect(function()
         petVisualPlacerEnabled = not petVisualPlacerEnabled
         if petVisualPlacerEnabled then
@@ -1118,20 +1140,17 @@ contentFrame.Parent = mainFrame
             statusLabel.Text = "🟢 Status: Enabled"
             statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
             notify("Pet Placer", "Enabled!", 4)
-            
             local mouse = LocalPlayer:GetMouse()
             mouseConnection = mouse.Button1Down:Connect(function()
                 if petVisualPlacerEnabled then 
                     handlePetPlacement(mouse.Hit.Position) 
                 end
             end)
-            
             UserInputService.InputBegan:Connect(function(input, gameProcessed)
                 if gameProcessed or not petVisualPlacerEnabled or input.UserInputType ~= Enum.UserInputType.Touch then return end
                 touchStartTime = tick()
                 touchStartPosition = input.Position
             end)
-            
             UserInputService.InputEnded:Connect(function(input, gameProcessed)
                 if gameProcessed or not petVisualPlacerEnabled or input.UserInputType ~= Enum.UserInputType.Touch then return end
                 local duration = tick() - touchStartTime
