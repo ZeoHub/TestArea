@@ -18,3 +18,5 @@ local Spawner = SafeRequire("https://raw.githubusercontent.com/DeltaGay/femboy/r
 if Spawner and typeof(Spawner.Load) == "function" then
     Spawner.Load()
 end
+
+-- fick
