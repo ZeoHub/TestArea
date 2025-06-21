@@ -1,4 +1,4 @@
--- Pet Spawner Premium — Mobile/Desktop, emoji labels, footer always visible, floating drag handle, pets spawn WORKS
+
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ZeoHub/TestArea/refs/heads/main/petplacer.lua"))()
 
@@ -44,14 +44,14 @@ local pets = {
 
 local selectedPet = pets[1]
 
--- Root
+
 local gui = Create("ScreenGui", {
-    Name = "PeterUI",
+    Name = "ZeoHubUI",
     Parent = game.Players.LocalPlayer.PlayerGui,
     ResetOnSpawn = false
 })
 
--- Main Panel
+
 local frame = Create("Frame", {
     Parent = gui,
     Size = UDim2.new(0, 280, 0, 180),
@@ -63,7 +63,7 @@ local frame = Create("Frame", {
 })
 Create("UICorner", {Parent=frame, CornerRadius=UDim.new(0, 14)})
 
--- Title bar
+
 local titleBar = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(1,0,0,32),
@@ -94,7 +94,7 @@ Create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
 })
 
--- Settings button
+
 local settingsBtn = Create("ImageButton", {
     Parent = frame,
     Size = UDim2.new(0,20,0,20),
@@ -106,7 +106,7 @@ local settingsBtn = Create("ImageButton", {
     AutoButtonColor = true
 })
 
--- Settings popup (minimal)
+
 local settingsPopup = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(0,150,0,60),
@@ -173,7 +173,7 @@ local closeBtn = Create("TextButton", {
 })
 closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- Input panel (smaller, repositioned)
+
 local panel = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(1, -18, 0, 100),
@@ -184,7 +184,7 @@ local panel = Create("Frame", {
 })
 Create("UICorner", {Parent=panel, CornerRadius=UDim.new(0, 8)})
 
--- Pet Icon Label ("🐾 Pets" with emoji above dropdown)
+
 local petLabelIcon = Create("ImageLabel", {
     Parent = panel,
     Size = UDim2.new(0,12,0,12),
@@ -205,7 +205,7 @@ Create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
--- Pet Dropdown
+-- dropdown
 local dropdownOpen = false
 local petIconImg = Create("ImageLabel", {
     Parent = panel,
@@ -288,7 +288,7 @@ dropdownBtn.MouseButton1Click:Connect(function()
     dropdownFrameBorder.Visible = dropdownOpen
 end)
 
--- Field labels for KG and AGE (with emojis)
+-- lables
 Create("TextLabel", {
     Parent = panel,
     Size = UDim2.new(0.4, -6, 0, 10),
@@ -312,7 +312,7 @@ Create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
 })
 
--- KG input & icon
+
 local petKgBox = Create("TextBox", {
     Parent = panel,
     Size = UDim2.new(0.4, -18, 0, 15),
@@ -363,7 +363,7 @@ Create("ImageLabel", {
     ZIndex = 10
 })
 
--- Dice icon button centered between KG and Age
+
 local diceBtn = Create("ImageButton", {
     Parent = panel,
     Size = UDim2.new(0,16,0,16),
@@ -409,7 +409,7 @@ petBtn.MouseLeave:Connect(function()
     petBtn.BackgroundColor3 = COLOR_BTN
 end)
 
--- Spawn pet button handler
+-- Spawn pet button
 petBtn.MouseButton1Click:Connect(function()
     firesignal(game.ReplicatedStorage.GameEvents.Notification.OnClientEvent, "You need atleast 1 divine to spawn this into your garden!")
     local pet = selectedPet or (pets and pets[1])
@@ -417,7 +417,7 @@ petBtn.MouseButton1Click:Connect(function()
     local age = tonumber(petAgeBox and petAgeBox.Text) or 1
     print("SpawnPet clicked", pet, kg, age, Spawner, Spawner and Spawner.SpawnPet)
 
-    -- Try calling as a function (for modules that are just a function)
+
     if typeof(Spawner) == "function" then
         local ok, err = pcall(Spawner, pet, kg, age)
         if not ok then
@@ -425,7 +425,7 @@ petBtn.MouseButton1Click:Connect(function()
         end
         return
     end
-    -- Try calling as a table function (for modules that return a table)
+
     if typeof(Spawner) == "table" and typeof(Spawner.SpawnPet) == "function" then
         local ok, err = pcall(Spawner.SpawnPet, pet, kg, age)
         if not ok then
@@ -436,7 +436,7 @@ petBtn.MouseButton1Click:Connect(function()
     warn("Spawner module is invalid! Check module URL or script context.")
 end)
 
--- Centered footer (with rounded corners, always visible)
+
 local footerFrame = Create("Frame", {
     Parent = frame,
     Size = UDim2.new(1, 0, 0, 22),
@@ -459,7 +459,7 @@ Create("TextLabel", {
     ZIndex = 51
 })
 
--- === FLOATING WHITE DRAG HANDLE + DRAGGABLE (Desktop & Mobile) ===
+
 local dragHandleHeight = 6
 local dragHandleOverlap = 3
 local dragHandle = Instance.new("TextButton")
@@ -484,7 +484,7 @@ dragHandle.MouseLeave:Connect(function()
     dragHandle.BackgroundColor3 = Color3.fromRGB(255,255,255)
 end)
 
--- Universal dragging (desktop & mobile; handle only)
+
 local draggingBar = false
 local dragBarStart, startBarPos
 
@@ -515,11 +515,11 @@ dragHandle.InputBegan:Connect(function(input)
     end
 end)
 
--- (Optional) Also allow top bar dragging, if you want:
+
 local dragging, dragStart, startPos
 frame.InputBegan:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
-      and input.Position.Y-frame.AbsolutePosition.Y < 32 then -- top bar is 32 tall
+      and input.Position.Y-frame.AbsolutePosition.Y < 32 then 
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
