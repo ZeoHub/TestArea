@@ -1,8 +1,4 @@
 
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ZeoHub/TestArea/refs/heads/main/petplacer.lua"))()
-
-local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua"))()
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
 
 local function Create(class, props)
