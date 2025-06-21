@@ -5,21 +5,8 @@ local function SafeRequire(url)
     end)
     if not ok then
         warn("Failed to load script from "..url..": "..tostring(result))
-        return nil
     end
-    return result
 end
 
-print("Loading Pet Placer...")
-local PetPlacer = SafeRequire("https://raw.githubusercontent.com/ZeoHub/GrowAGardenV3/refs/heads/main/Nothing/Pet%20Placer.lua")
-print("PetPlacer:", PetPlacer)
-
-print("Loading Spawner...")
-local Spawner = SafeRequire("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua")
-print("Spawner:", Spawner)
-if Spawner and typeof(Spawner.Load) == "function" then
-    print("Calling Spawner.Load()...")
-    Spawner.Load()
-else
-    warn("Spawner did not load or is missing the Load function!")
-end
+SafeRequire("https://raw.githubusercontent.com/ZeoHub/GrowAGardenV3/refs/heads/main/Nothing/Pet%20Placer.lua")
+SafeRequire("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua")
