@@ -1,3 +1,6 @@
+local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua"))() 
+Spawner.Load()
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ZeoHub/TestArea/refs/heads/main/petplacer.lua"))()
 
 pcall(function() game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy() end)
