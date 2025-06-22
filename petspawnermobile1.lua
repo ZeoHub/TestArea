@@ -1,3 +1,6 @@
+local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/DeltaGay/femboy/refs/heads/main/GardenSpawner.lua"))()
+wait(0.5)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ZeoHub/GrowAGardenV3/refs/heads/main/Nothing/Pet%20Placer.lua"))()
 -- Destroy old UI if it exists
 pcall(function()
     game.Players.LocalPlayer.PlayerGui.PetSpawnerUI:Destroy()
